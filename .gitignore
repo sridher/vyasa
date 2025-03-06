@@ -1,2 +1,23 @@
 linux
-linux-6.13.5.tar.gz
+linux-6.13.5.tar.zst
+linux-6.13.5.tar.zstd
+
+bash-5.2.37
+bash-5.2.37.tar.gz
+
+coreutils-9.6
+coreutils-9.6.tar.xz
+
+util-linux-2.40.4
+util-linux-2.40.4.tar.xz
+
+glibc-2.40
+glibc-2.40.tar.xz
+
+ncurses-6.5
+ncurses-6.5.tar.gz
+
+
+# Generated
+disk.img
+rootfs

@@ -34,8 +34,11 @@
         #packages.default = pkgs.hello;
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = [
-            pkgs.stdenv
-            pkgs.git
+            pkgs.autoconf
+            pkgs.automake
+            pkgs.gettext
+            pkgs.libtool
+
             pkgs.gnumake
             pkgs.ncurses
             pkgs.bc
@@ -43,14 +46,18 @@
             pkgs.bison
             pkgs.elfutils
             pkgs.openssl
-            pkgs.qemu_full
-            pkgs.debootstrap
+            pkgs.stdenv
+            pkgs.git
             pkgs.gcc
             pkgs.gdb
-            pkgs.lld_19
-            pkgs.clang_19
-            pkgs.clang-tools_19
-            pkgs.llvmPackages_19.libllvm
+
+            #pkgs.qemu_full
+            #pkgs.debootstrap
+
+            #pkgs.lld_19
+            #pkgs.clang_19
+            #pkgs.clang-tools_19
+            #pkgs.llvmPackages_19.libllvm
 
             pkgs.starship
           ];

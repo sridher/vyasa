@@ -34,22 +34,24 @@
         #packages.default = pkgs.hello;
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = [
+            pkgs.bc
+            pkgs.flex
+            pkgs.bison
+            pkgs.ncurses
+
+            pkgs.gcc
+
             pkgs.autoconf
             pkgs.automake
             pkgs.gettext
             pkgs.libtool
 
             pkgs.gnumake
-            pkgs.ncurses
-            pkgs.bc
-            pkgs.flex
-            pkgs.bison
             pkgs.elfutils
             pkgs.openssl
-            pkgs.stdenv
-            pkgs.git
-            pkgs.gcc
-            pkgs.gdb
+            #pkgs.stdenv
+
+            #pkgs.libxcrypt
 
             #pkgs.qemu_full
             #pkgs.debootstrap

@@ -53,6 +53,9 @@
 
             #pkgs.libxcrypt
 
+            pkgs.grub2
+            pkgs.libnbd
+            pkgs.qemu-utils
             #pkgs.qemu_full
             #pkgs.debootstrap
 

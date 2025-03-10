@@ -3,33 +3,41 @@
 set -e
 set -o pipefail
 
-
 # development environment
 #nix develop
 
-# Cleanup
-rm vyasa.img rootfs bash-5.2.37 coreutils-9.6 glibc-2.40 linux ncurses-6.5 util-linux-2.40.4 -rfd
+RUNAS="doas" # or sudo
 
-# Rootfs dirs
+# Cleanup
+$RUNAS rm vyasa.qcow2 rootfs disk bash-5.2.37 coreutils-9.6 glibc-2.40 linux ncurses-6.5 util-linux-2.40.4 -rfd
+#$RUNAS rm vyasa.qcow2 rootfs disk toolchains bash-5.2.37 coreutils-9.6 glibc-2.40 linux ncurses-6.5 util-linux-2.40.4 -rfd
+
 export WS=$(pwd)
 export VYASA=$(pwd)/rootfs
 
-mkdir rootfs/{boot,proc,sys,dev,usr} -p
-mkdir rootfs/usr/{lib,lib64,bin,sbin} -p
-cd rootfs/
-ln -s usr/bin bin
-ln -s usr/sbin sbin
-ln -s usr/lib lib
-ln -s usr/lib64 lib64
-cd ..
+#mkdir toolchains && cd toolchains
+#wget https://landley.net/bin/toolchains/25-03-2024/x86_64-linux-musl-cross.tar.xz
+##wget https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64/tarballs/x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
+#tar -xf x86_64-linux-musl-cross.tar.xz
+#cd $WS
 
+export HOST=$WS/toolchains/x86_64-linux-musl-cross/bin/x86_64-linux-musl
+#export HOST=$WS/toolchains/x86-64--glibc--bleeding-edge-2024.05-1/bin/x86_64-buildroot-linux-gnu
+export TOOL="$HOST"-
+export CC="$TOOL"gcc
+export CXX="$TOOL"g++
+
+# Sysroot
+mkdir $VYASA/boot -p
+export SYSROOT=$($CC --print-sysroot)
+cp -R "$SYSROOT"/* $VYASA/
 
 # Kernel
 tar -xf linux-6.13.5.tar.zst
 
 cd linux
 make distclean
-make allnoconfig
+make CROSS_COMPILE=$TOOL allnoconfig
 
 # Kernel config
 
@@ -154,40 +162,21 @@ make allnoconfig
 #make olddefconfig
 
 mv .config vyasa-miniconfig 
-make allnoconfig KCONFIG_ALLCONFIG=vyasa-miniconfig
+make CROSS_COMPILE=$TOOL allnoconfig KCONFIG_ALLCONFIG=vyasa-miniconfig
 
-make -j16
-cp arch/x86/boot/bzImage $VYASA/boot/
+make CROSS_COMPILE=$TOOL -j16
+cp arch/x86/boot/bzImage $VYASA/boot/vyasa
 cd $WS
 
-# Binutils
-# The GNU Binary Utilities, or binutils, is a collection of programming tools maintained by the GNU Project for working with executable code including assembly, linking and many other development operations. 
-#tar -xf /run/media/js/EXTOS/Downloads/bootlin/x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
-#../configure --cross-compile-prefix=x86_64-linux- --prefix=$VYASA/usr
-#gcc — sysroot=dir
-#crosstool-ng
-#buildroot
-#skiffos
-#yacto
 
-# Glibc
-tar -xf glibc-2.40.tar.xz
-mkdir glibc-2.40/build -p
-cd glibc-2.40/build
-../configure --disable-werror --libdir=/lib --prefix=/usr
-
-make -j16
-make DESTDIR=$VYASA install
-#CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
-cd $WS
-
+export HOST=x86_64-linux-musl #overwriting to host
 
 # Bash
 # libtinfo.so.6 not found
 tar -xf bash-5.2.37.tar.gz
 mkdir bash-5.2.37/build -p
 cd bash-5.2.37/build
-../configure --prefix=/usr
+../configure --host $HOST --prefix=/usr
 
 make -j16
 make DESTDIR=$VYASA install
@@ -198,43 +187,66 @@ tar -xf coreutils-9.6.tar.xz
 mkdir coreutils-9.6/build -p
 cd coreutils-9.6/build
 export FORCE_UNSAFE_CONFIGURE=1 # error: you should not run configure as root
-../configure --without-selinux --disable-libcap --prefix=/usr
+../configure --host $HOST --without-selinux --disable-libcap --prefix=/usr
 
 make -j16
 make DESTDIR=$VYASA install
 cd $WS
 
+# Ncurses
+tar -xf ncurses-6.5.tar.gz
+mkdir ncurses-6.5/build -p
+cd ncurses-6.5/build
+../configure --host $HOST --disable-werror --libdir=/lib --prefix=/usr
+
+make -j16
+make DESTDIR=$VYASA install
+cd $WS
+
+
 # Util-linux
+# FIX: `NIXOS` line 1: ../tools/all_syscalls: cannot execute: required file not found
+if [ ! -f /bin/bash ]; then
+    echo "Bash not found!\n"
+    echo "---------------"
+    echo "Symlinking bash"
+    echo "---------------"
+    $RUNAS ln -s /run/current-system/sw/bin/bash /bin/bash 
+fi
+
 tar -xf util-linux-2.40.4.tar.xz
 mkdir util-linux-2.40.4/build -p
 cd util-linux-2.40.4
 ./autogen.sh
 cd build
-../configure --disable-liblastlog2 --prefix=/usr
+../configure --host $HOST --disable-liblastlog2 --prefix=/usr
 
 make -j16
-make DESTDIR=$VYASA install
+# FIX: `Flake` line 1: make: command not found
+MAKE=$(which make)
+$RUNAS $MAKE DESTDIR=$VYASA install
 cd $WS
-
-
-# ncurses
-tar -xf ncurses-6.5.tar.gz
-mkdir ncurses-6.5/build -p
-cd ncurses-6.5/build
-../configure --disable-werror --libdir=/lib --prefix=/usr
-
-make -j16
-make DESTDIR=$VYASA install
-cd $WS
-
 
 # LD
-$VYASA/bin/ld.so --help # check
-echo "/usr/lib" > $VYASA/etc/ld.so.config
-echo "/usr/lib64" >> $VYASA/etc/ld.so.config
+$VYASA/bin/ld --help # check
+#$VYASA/bin/ld.so --help # check
+#echo "/usr/lib" > $VYASA/etc/ld.so.config
+#echo "/usr/lib64" >> $VYASA/etc/ld.so.config
+
+
+# Rootfs dirs
+mkdir rootfs/{boot,proc,sys,dev,usr} -p
+mkdir rootfs/usr/{lib,lib64,bin,sbin} -p
+#cd rootfs/
+#ln -s usr/bin bin
+#ln -s usr/sbin sbin
+#ln -s usr/lib lib
+#ln -s usr/lib64 lib64
+#cd ..
+
 
 # init
-cat > "$VYASA"/sbin/init << 'EOF' &&
+$RUNAS cat > "$VYASA"/sbin/init << 'EOF' &&
 #!/bin/bash
 echo "### INIT SCRIPT ###"
 mkdir /proc /sys /tmp
@@ -244,12 +256,19 @@ mount -t tmpfs none /tmp
 echo -e "\nThis boot took $(cut -d' ' -f1 /proc/uptime) seconds\n"
 exec /bin/bash
 EOF
-chmod +x "$VYASA"/sbin/init
+$RUNAS chmod +x "$VYASA"/sbin/init
 
 # fdisk
 cd $WS
-dd if=/dev/zero of=vyasa.img bs=1M count=1024
-fdisk vyasa.img <<EOF
+qemu-img create -f qcow2 vyasa.qcow2 5G
+
+#lsmod | grep nbd
+#modprobe nbd max_parts=8
+lsmod | grep nbd
+
+$RUNAS qemu-nbd --connect=/dev/nbd0 vyasa.qcow2
+#❯ doas sfdisk -d /dev/nbd0 > vyasa.sfdisk
+$RUNAS fdisk /dev/nbd0 <<EOF
 n
 p
 1
@@ -258,28 +277,25 @@ p
 a
 w
 EOF
+$RUNAS fdisk -l /dev/nbd0
+lsblk -a | grep nbd0p1
+#mknod /dev/nbd0p1 b 43 1
+$RUNAS mkfs.ext4 /dev/nbd0p1
 
+mkdir $WS/disk
+$RUNAS mount /dev/nbd0p1 $WS/disk
 
-#####################################
-#          flaky section
-#####################################
-mkdir /tmp/mnt
-ldev=$(losetup -fP --show vyasa.img)
-mkfs.ext4 "$ldev"p1
-mount "$ldev"p1 /tmp/mnt
-cp -R $VYASA/* /tmp/mnt/
+$RUNAS cp -R $VYASA/* $WS/disk
 
 #grub
-#grub-install --target=i386-pc --root-directory=/tmp/mnt --no-floppy --modules="normal part_msdos ext2 multiboot" $ldev
-grub-install --target=i386-pc --root-directory=/tmp/mnt --no-floppy --modules="normal part_msdos ext2 multiboot" $ldev --force
-#doas nix shell nixpkgs#grub2 -c grub-install --target=i386-pc --root-directory=/tmp/mnt --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/loop0
+$RUNAS grub-install --target=i386-pc --root-directory=$WS/disk --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/nbd0
+#grub-install --target=i386-pc --root-directory=$WS/disk --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/nbd0 --force
 
-#####################################
-
-cat > /tmp/mnt/boot/grub/grub.cfg <<EOF
+#mkdir $WS/disk/boot/grub -p
+$RUNAS tee -a $WS/disk/boot/grub/grub.cfg > /dev/null <<EOF
 menuentry 'Vyasa' {
     set root='(hd0,1)'
-    linux /boot/bzImage root=/dev/sda1 rw console=ttyS0
+    linux /boot/vyasa root=/dev/sda1 rw console=ttyS0
 }
 EOF
 
@@ -287,8 +303,8 @@ EOF
 sync
 sync
 sync
-umount /tmp/mnt
-losetup -d $ldev
+$RUNAS umount  $WS/disk
+$RUNAS qemu-nbd --disconnect /dev/nbd0
 sync
 sync
 sync

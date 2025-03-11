@@ -8,9 +8,35 @@ set -o pipefail
 
 RUNAS="doas" # or sudo
 
+#https://www.shellhacks.com/bash-colors/
+#❯ neofetch
+# fg = 30..37
+# bg = 40..47
+# lfg = 1;{30..37}
+# lbg = 1;{40..47}
+
+# MODIFICATIONS: 0 -> Normal, 1 -> Bold, 4 -> Underline, 5 -> Blinking, 7 -> Reverse video char
+# -e    	Enable interpretation of backslash escapes
+# \e[   	Begin the color modifications
+# COLORm	Color Code + ‘m’ at the end
+# \e[0m 	End code in the color modifications
+#
+# echo -e "\e[COLORmSample Text\e[0m"
+# echo -e "\e[COLOR1;COLOR2mSample Text\e[0m"
+
+echo -e "\e[1;34mWelcome to Vyasa linux....\e[0m"
+
+# Warmup admin
+$RUNAS echo -e "\e[1;36m$(uname -a)\e[0m"
+
+$RUNAS modprobe nbd max_parts=8
+
 # Cleanup
-$RUNAS rm vyasa.qcow2 rootfs disk bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 musl-1.2.5 toybox-0.8.12 -rfd
-#$RUNAS rm vyasa.qcow2 rootfs disk toolchains bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 musl-1.2.5 toybox-0.8.12 -rfd
+SECONDS=0
+TOTALTIME=0
+
+$RUNAS rm vyasa.qcow2 rootfs disk bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 iproute2-6.13.0 musl-1.2.5 toybox-0.8.12 -rfd
+#$RUNAS rm vyasa.qcow2 rootfs disk toolchains bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 iproute2-6.13.0 musl-1.2.5 toybox-0.8.12 -rfd
 
 export WS=$(pwd)
 export VYASA=$(pwd)/rootfs
@@ -37,16 +63,90 @@ export CXX="$TOOL"g++
 #docker rm -f dummy
 
 # Rootfs dirs
-mkdir $VYASA/{bin,boot,proc,sys,tmp,dev,usr} -p
-mkdir $VYASA/usr/{lib64,bin,sbin} -p
-cd $VYASA/
-ln -s usr/bin bin
-ln -s usr/sbin sbin
-#ln -s usr/lib lib
-#ln -s usr/lib64 lib64
-cd $WS
+mkdir -p "$VYASA"/{boot,dev,etc/rc,home,mnt,proc,root,sys,tmp/run,usr/{bin,sbin,lib},var} &&
+chmod a+rwxt "$VYASA"/tmp && ln -s usr/{bin,sbin,lib} tmp/run "$VYASA"
 # DEBUG:
-$RUNAS cp /tmp/nxjs/{ash,bash,dash,nu,mount} $VYASA/bin/
+cp /tmp/nxjs/{ash,bash,dash,fish,micro,nu,ping,wget} $VYASA/bin/
+
+# init
+$RUNAS tee -a "$VYASA"/sbin/init > /dev/null << 'EOF' &&
+#!/bin/bash
+echo -e "\e[1;36m### INIT SCRIPT ###\e[0m"
+
+export HOME=/home PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+mount -t devtmpfs none /dev
+mount -t proc none /proc
+mount -t sysfs none /sys
+mount -t tmpfs none /tmp
+
+ip link set up eth0
+ip addr add 10.0.2.11/24 dev eth0
+ip route add 10.0.2.2 dev eth0
+ip route add 0/0 via 10.0.2.2 dev eth0
+
+dnsmasq -uroot
+
+#mknod -m 622 /dev/console c 5 1
+#mknod -m 666 /dev/null c 1 3
+#mknod -m 666 /dev/zero c 1 5
+#mknod -m 666 /dev/ptmx c 5 2
+#mknod -m 666 /dev/tty c 5 0 # <--
+#mknod -m 444 /dev/random c 1 8
+#mknod -m 444 /dev/urandom c 1 9
+#chown root:tty /dev/{console,ptmx,tty}
+
+#ls -la /dev/{console,null,zero,ptmx,tty,random,urandom,ttyS*}
+
+echo -e "\e[1;33m\nThis boot took $(cut -d' ' -f1 /proc/uptime) seconds\e[0m\n"
+exec /bin/bash
+EOF
+$RUNAS chmod +x "$VYASA"/sbin/init
+
+# Distro
+$RUNAS tee -a "$VYASA"/etc/passwd > /dev/null << 'EOF' &&
+root:x:0:0:root:/root:/bin/sh
+guest:x:500:500:guest:/home/guest:/bin/sh
+nobody:x:65534:65534:nobody:/proc/self:/dev/null
+EOF
+
+$RUNAS tee -a "$VYASA"/etc/group > /dev/null << 'EOF' &&
+root:x:0:\nguest:x:500:\nnobody:x:65534:
+EOF
+
+$RUNAS tee -a "$VYASA"/etc/resolv.conf > /dev/null << 'EOF' &&
+nameserver 1.1.1.1
+nameserver 8.8.8.8
+EOF
+
+#❯ wget https://curl.haxx.se/ca/cacert.pem
+mkdir "$VYASA"/etc/ssl/certs -p
+cp cacert.pem "$VYASA"/etc/ssl/certs/ca-certificates.crt
+rm cacert.pem 
+
+$RUNAS tee -a "$VYASA"/etc/os-release > /dev/null << 'EOF' &&
+NAME="Vyasa linux"
+VERSION="pre.alpha"
+EOF
+
+$RUNAS tee -a "$VYASA"/etc/environment > /dev/null << 'EOF' &&
+#Only programs compiled with PAM (Pluggable Authentication Module) support are able to use it (primarily login systems, which subsequently start the shell or user environment).     
+PATH=/usr/bin:/usr/sbin
+#PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
+EOF
+
+$RUNAS tee -a "$VYASA"/etc/profile > /dev/null << 'EOF' &&
+# Executed whenever a shell is entered (e.g. when logging in from the console or over ssh)
+if [ -d /etc/profile.d ]; then
+  for i in /etc/profile.d/*.sh; do
+    if [ -r $i ]; then
+      . $i
+    fi
+  done
+  unset i
+fi
+export HOME=/home PATH=/bin:/sbin:/usr/bin:/usr/sbin
+EOF
 
 ## Sysroot
 #export SYSROOT=$($CC --print-sysroot)
@@ -54,6 +154,10 @@ $RUNAS cp /tmp/nxjs/{ash,bash,dash,nu,mount} $VYASA/bin/
 #cp -R "$SYSROOT"/include $VYASA/
 #cp -R "$SYSROOT"/lib $VYASA/
 
+duration=$SECONDS
+echo -e "\e[1;33mPre init took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
 
 # Kernel
 tar -xf linux-6.13.5.tar.zst
@@ -101,7 +205,35 @@ make CROSS_COMPILE=$TOOL tinyconfig
 ./scripts/config --set-val CONFIG_SYSFS y
 
 #Other options
+#./scripts/config --set-val CONFIG_TTY_PRINTK y
 ./scripts/config --set-val CONFIG_EARLY_PRINTK y
+#./scripts/config --set-val CONFIG_VIRTIO_CONSOLE y
+#./scripts/config --set-val CONFIG_VT_HW_CONSOLE_BINDING y
+
+# Network
+#EXPERT
+#FUTEX
+#COMPAT_32BIT_TIME
+#NET
+#PACKET
+#UNIX
+#INET
+#NETDEVICES
+#ETHERNET
+#E1000
+#INOTIFY_USER
+
+./scripts/config --set-val CONFIG_EXPERT y
+./scripts/config --set-val CONFIG_FUTEX y
+./scripts/config --set-val CONFIG_COMPAT_32BIT_TIME y
+./scripts/config --set-val CONFIG_NET y
+./scripts/config --set-val CONFIG_PACKET y
+./scripts/config --set-val CONFIG_UNIX y
+./scripts/config --set-val CONFIG_INET y
+./scripts/config --set-val CONFIG_NETDEVICES y
+./scripts/config --set-val CONFIG_ETHERNET y
+./scripts/config --set-val CONFIG_E1000 y
+./scripts/config --set-val CONFIG_INOTIFY_USER y
 
 #make defconfig
 #make oldconfig
@@ -114,6 +246,17 @@ make CROSS_COMPILE=$TOOL -j16
 cp arch/x86/boot/bzImage $VYASA/boot/vyasa
 cd $WS
 
+duration=$SECONDS
+echo -e "\e[1;33mKernel compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+
+# Static
+#❯ ldd /tmp/nxjs/fish
+#❯ cp result/bin/fish* /tmp/nxjs/
+#❯ nix build -L nixpkgs#pkgsStatic.fish
+#❯ nix build -L nixpkgs#pkgsStatic.toybox
 
 #export HOST=x86_64-linux-gnu #overwriting to host
 export HOST=x86_64-linux-musl #overwriting to host
@@ -140,6 +283,11 @@ make DESTDIR=$VYASA install
 #CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
 cd $WS
 
+duration=$SECONDS
+echo -e "\e[1;33mmusllibc compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
 ## Bash
 ## bash: xmalloc: ../locale.c:84: cannot allocate 6 bytes (0 bytes allocated
 #tar -xf bash-5.2.37.tar.gz
@@ -162,6 +310,11 @@ make -j16
 make DESTDIR=$VYASA install
 cd $WS
 
+duration=$SECONDS
+echo -e "\e[1;33mcoreutils compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
 # Ncurses
 tar -xf ncurses-6.5.tar.gz
 mkdir ncurses-6.5/build -p
@@ -172,14 +325,18 @@ make -j16
 make DESTDIR=$VYASA install
 cd $WS
 
+duration=$SECONDS
+echo -e "\e[1;33mncurces compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
 
 # Util-linux
 # FIX: `NIXOS` line 1: ../tools/all_syscalls: cannot execute: required file not found
 if [ ! -f /bin/bash ]; then
-    echo "Bash not found!\n"
-    echo "---------------"
-    echo "Symlinking bash"
-    echo "---------------"
+    echo -e "\e[1;31mBash not found!\n"
+    echo -e "\e[1;30m---------------"
+    echo -e "\e[1;34mSymlinking bash"
+    echo -e "\e[1;30m---------------"
     $RUNAS ln -s /run/current-system/sw/bin/bash /bin/bash 
 fi
 
@@ -196,42 +353,48 @@ MAKE=$(which make)
 $RUNAS $MAKE DESTDIR=$VYASA install
 cd $WS
 
+duration=$SECONDS
+echo -e "\e[1;33mutil-linux compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# iproute
+tar -xf iproute2-6.13.0.tar.xz
+#mkdir iproute2-6.13.0.tar.xz/build -p
+cd iproute2-6.13.0
+./configure --libbpf_force off --prefix=/usr
+
+make -j16
+# FIX: `Flake` line 1: make: command not found
+MAKE=$(which make)
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33miproute compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# dnsmasq2
+tar -xf dnsmasq-2.90.tar.xz
+cd dnsmasq-2.90
+make -j16
+cp src/dnsmasq $VYASA/bin
+make DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33dnsmasq2 compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
 # LD
-$VYASA/lib/libc.so $VYASA/usr/bin/uname -a
+echo -e "\e[1;32m$($VYASA/lib/libc.so $VYASA/usr/bin/uname -a)\e[0m"
+
 #$VYASA/bin/ld --help # check
 #$VYASA/bin/ld.so --help # check
-#echo "/usr/lib" > $VYASA/etc/ld.so.config
-#echo "/usr/lib64" >> $VYASA/etc/ld.so.config
-
-
-echo "Admin authentication......"
-# init
-$RUNAS tee -a "$VYASA"/sbin/init > /dev/null << 'EOF' &&
-#!/bin/bash
-echo "### INIT SCRIPT ###"
-
-PATH=/sbin:/bin:/usr/sbin:/usr/bin
-
-mount -t devtmpfs none /dev
-mount -t proc none /proc
-mount -t sysfs none /sys
-mount -t tmpfs none /tmp
-
-#mknod -m 622 /dev/console c 5 1
-#mknod -m 666 /dev/null c 1 3
-#mknod -m 666 /dev/zero c 1 5
-#mknod -m 666 /dev/ptmx c 5 2
-#mknod -m 666 /dev/tty c 5 0 # <--
-#mknod -m 444 /dev/random c 1 8
-#mknod -m 444 /dev/urandom c 1 9
-#chown root:tty /dev/{console,ptmx,tty}
-
-#ls -la /dev/{console,null,zero,ptmx,tty,random,urandom,ttyS*}
-
-echo -e "\nThis boot took $(cut -d' ' -f1 /proc/uptime) seconds\n"
-exec /bin/bash
-EOF
-$RUNAS chmod +x "$VYASA"/sbin/init
+#echo -e "\e[1;33m/usr/lib" > $VYASA/etc/ld.so.config
+#echo -e "\e[1;33m/usr/lib64" >> $VYASA/etc/ld.so.config
 
 # fdisk
 cd $WS
@@ -241,6 +404,7 @@ qemu-img create -f qcow2 vyasa.qcow2 2G
 #modprobe nbd max_parts=8
 lsmod | grep nbd
 
+#echo -e "\e[1;33mAdmin authentication.......\e[0m"
 $RUNAS qemu-nbd --connect=/dev/nbd0 vyasa.qcow2
 sleep 5
 
@@ -285,5 +449,10 @@ sync
 sync
 sync
 
+
+duration=$SECONDS
+echo -e "\e[1;33mPost processing took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
 
 exit 0

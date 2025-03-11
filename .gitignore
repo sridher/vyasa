@@ -23,6 +23,18 @@ musl-1.2.5.tar.gz
 ncurses-6.5
 ncurses-6.5.tar.gz
 
+iproute2-6.13.0
+iproute2-6.13.0.tar.xz
+
+dnsmasq-2.90
+dnsmasq-2.90.tar.xz
+
+elfutils-latest
+elfutils-latest.tar.bz2
+
+iputils-20240905
+iputils-20240905.tar.xz
+
 # Toolchains
 toolchains
 

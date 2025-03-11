@@ -17,6 +17,9 @@ util-linux-2.40.4.tar.xz
 glibc-2.41
 glibc-2.41.tar.xz
 
+musl-1.2.5
+musl-1.2.5.tar.gz
+
 ncurses-6.5
 ncurses-6.5.tar.gz
 

@@ -9,8 +9,8 @@ set -o pipefail
 RUNAS="doas" # or sudo
 
 # Cleanup
-$RUNAS rm vyasa.qcow2 rootfs disk bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 toybox-0.8.12 -rfd
-#$RUNAS rm vyasa.qcow2 rootfs disk toolchains bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 toybox-0.8.12 -rfd
+$RUNAS rm vyasa.qcow2 rootfs disk bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 musl-1.2.5 toybox-0.8.12 -rfd
+#$RUNAS rm vyasa.qcow2 rootfs disk toolchains bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 musl-1.2.5 toybox-0.8.12 -rfd
 
 export WS=$(pwd)
 export VYASA=$(pwd)/rootfs
@@ -40,7 +40,6 @@ export CXX="$TOOL"g++
 mkdir $VYASA/{bin,boot,proc,sys,tmp,dev,usr} -p
 mkdir $VYASA/usr/{lib64,bin,sbin} -p
 cd $VYASA/
-#mkdir usr/bin
 ln -s usr/bin bin
 ln -s usr/sbin sbin
 #ln -s usr/lib lib
@@ -49,11 +48,11 @@ cd $WS
 # DEBUG:
 $RUNAS cp /tmp/nxjs/{ash,bash,dash,nu,mount} $VYASA/bin/
 
-# Sysroot
-export SYSROOT=$($CC --print-sysroot)
-cp -R "$SYSROOT"/bin $VYASA/
-cp -R "$SYSROOT"/include $VYASA/
-cp -R "$SYSROOT"/lib $VYASA/
+## Sysroot
+#export SYSROOT=$($CC --print-sysroot)
+#cp -R "$SYSROOT"/bin $VYASA/
+#cp -R "$SYSROOT"/include $VYASA/
+#cp -R "$SYSROOT"/lib $VYASA/
 
 
 # Kernel
@@ -102,6 +101,7 @@ make CROSS_COMPILE=$TOOL tinyconfig
 ./scripts/config --set-val CONFIG_SYSFS y
 
 #Other options
+./scripts/config --set-val CONFIG_EARLY_PRINTK y
 
 #make defconfig
 #make oldconfig
@@ -129,9 +129,19 @@ export HOST=x86_64-linux-musl #overwriting to host
 ##CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
 #cd $WS
 
+# musl-libc
+tar -xf musl-1.2.5.tar.gz
+mkdir musl-1.2.5/build -p
+cd musl-1.2.5/build
+../configure --host $HOST --disable-werror --libdir=/lib --prefix=/usr
+
+make -j16
+make DESTDIR=$VYASA install
+#CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
+cd $WS
 
 ## Bash
-## libtinfo.so.6 not found
+## bash: xmalloc: ../locale.c:84: cannot allocate 6 bytes (0 bytes allocated
 #tar -xf bash-5.2.37.tar.gz
 #mkdir bash-5.2.37/build -p
 #cd bash-5.2.37/build
@@ -152,42 +162,43 @@ make -j16
 make DESTDIR=$VYASA install
 cd $WS
 
-## Ncurses
-#tar -xf ncurses-6.5.tar.gz
-#mkdir ncurses-6.5/build -p
-#cd ncurses-6.5/build
-#../configure --host $HOST --disable-werror --libdir=/lib --prefix=/usr
-#
-#make -j16
-#make DESTDIR=$VYASA install
-#cd $WS
+# Ncurses
+tar -xf ncurses-6.5.tar.gz
+mkdir ncurses-6.5/build -p
+cd ncurses-6.5/build
+../configure --host $HOST --disable-werror --libdir=/lib --prefix=/usr
+
+make -j16
+make DESTDIR=$VYASA install
+cd $WS
 
 
-## Util-linux
-## FIX: `NIXOS` line 1: ../tools/all_syscalls: cannot execute: required file not found
-#if [ ! -f /bin/bash ]; then
-#    echo "Bash not found!\n"
-#    echo "---------------"
-#    echo "Symlinking bash"
-#    echo "---------------"
-#    $RUNAS ln -s /run/current-system/sw/bin/bash /bin/bash 
-#fi
-#
-#tar -xf util-linux-2.40.4.tar.xz
-#mkdir util-linux-2.40.4/build -p
-#cd util-linux-2.40.4
-#./autogen.sh
-#cd build
-#../configure --host $HOST --disable-liblastlog2 --prefix=/usr
-#
-#make -j16
-## FIX: `Flake` line 1: make: command not found
-#MAKE=$(which make)
-#$RUNAS $MAKE DESTDIR=$VYASA install
-#cd $WS
+# Util-linux
+# FIX: `NIXOS` line 1: ../tools/all_syscalls: cannot execute: required file not found
+if [ ! -f /bin/bash ]; then
+    echo "Bash not found!\n"
+    echo "---------------"
+    echo "Symlinking bash"
+    echo "---------------"
+    $RUNAS ln -s /run/current-system/sw/bin/bash /bin/bash 
+fi
+
+tar -xf util-linux-2.40.4.tar.xz
+mkdir util-linux-2.40.4/build -p
+cd util-linux-2.40.4
+./autogen.sh
+cd build
+../configure --host $HOST --disable-liblastlog2 --prefix=/usr
+
+make -j16
+# FIX: `Flake` line 1: make: command not found
+MAKE=$(which make)
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
 
 # LD
-$VYASA/bin/ld --help # check
+$VYASA/lib/libc.so $VYASA/usr/bin/uname -a
+#$VYASA/bin/ld --help # check
 #$VYASA/bin/ld.so --help # check
 #echo "/usr/lib" > $VYASA/etc/ld.so.config
 #echo "/usr/lib64" >> $VYASA/etc/ld.so.config

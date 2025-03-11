@@ -2,6 +2,9 @@ linux
 linux-6.13.5.tar.zst
 linux-6.13.5.tar.zstd
 
+toybox-0.8.12
+toybox-0.8.12.tar.gz
+
 bash-5.2.37
 bash-5.2.37.tar.gz
 
@@ -17,6 +20,8 @@ glibc-2.41.tar.xz
 ncurses-6.5
 ncurses-6.5.tar.gz
 
+# Toolchains
+toolchains
 
 # Generated
 vyasa.qcow2

@@ -9,43 +9,52 @@ set -o pipefail
 RUNAS="doas" # or sudo
 
 # Cleanup
-$RUNAS rm vyasa.qcow2 rootfs disk bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 -rfd
-#$RUNAS rm vyasa.qcow2 rootfs disk toolchains bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 -rfd
+$RUNAS rm vyasa.qcow2 rootfs disk bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 toybox-0.8.12 -rfd
+#$RUNAS rm vyasa.qcow2 rootfs disk toolchains bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 toybox-0.8.12 -rfd
 
 export WS=$(pwd)
 export VYASA=$(pwd)/rootfs
 
-#mkdir toolchains && cd toolchains
-##wget https://landley.net/bin/toolchains/25-03-2024/x86_64-linux-musl-cross.tar.xz
-#wget https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64/tarballs/x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
-##tar -xf x86_64-linux-musl-cross.tar.xz
-#tar -xf x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
+#mkdir toolchains 
+#cd toolchains
+#wget https://landley.net/bin/toolchains/25-03-2024/x86_64-linux-musl-cross.tar.xz
+##wget https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64/tarballs/x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
+#tar -xf x86_64-linux-musl-cross.tar.xz
+##tar -xf x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
 #cd $WS
 
-#export HOST=$WS/toolchains/x86_64-linux-musl-cross/bin/x86_64-linux-musl
-export HOST=$WS/toolchains/x86-64--glibc--bleeding-edge-2024.05-1/bin/x86_64-buildroot-linux-gnu
+export HOST=$WS/toolchains/x86_64-linux-musl-cross/bin/x86_64-linux-musl
+#export HOST=$WS/toolchains/x86-64--glibc--bleeding-edge-2024.05-1/bin/x86_64-buildroot-linux-gnu
 export TOOL="$HOST"-
 export CC="$TOOL"gcc
 export CXX="$TOOL"g++
 
+## FIX: `Workaround` mkpasswd.c:(.text.mkpasswd_main+0x1cc): undefined reference to `crypt'
+#docker build -t toybox:0.8.12 .
+#docker rm -f dummy
+#docker create --name dummy toybox:0.8.12
+#docker cp -a dummy:/ $VYASA
+#docker rm -f dummy
+
 # Rootfs dirs
-mkdir $VYASA/{boot,proc,sys,tmp,dev,usr} -p
-#mkdir $VYASA/usr/{lib,lib64,bin,sbin} -p
+mkdir $VYASA/{bin,boot,proc,sys,tmp,dev,usr} -p
+mkdir $VYASA/usr/{lib64,bin,sbin} -p
 cd $VYASA/
-mkdir usr/bin
+#mkdir usr/bin
 ln -s usr/bin bin
-#ln -s usr/sbin sbin
+ln -s usr/sbin sbin
 #ln -s usr/lib lib
 #ln -s usr/lib64 lib64
 cd $WS
 # DEBUG:
-cp /tmp/nxjs/{ash,bash,dash,nu,mount} $VYASA/bin/
+$RUNAS cp /tmp/nxjs/{ash,bash,dash,nu,mount} $VYASA/bin/
 
 # Sysroot
-mkdir $VYASA/boot -p
 export SYSROOT=$($CC --print-sysroot)
-cp -R "$SYSROOT"/usr $VYASA/
+cp -R "$SYSROOT"/bin $VYASA/
+cp -R "$SYSROOT"/include $VYASA/
 cp -R "$SYSROOT"/lib $VYASA/
+
 
 # Kernel
 tar -xf linux-6.13.5.tar.zst
@@ -94,55 +103,6 @@ make CROSS_COMPILE=$TOOL tinyconfig
 
 #Other options
 
-#./scripts/config --set-val CONFIG_UNWINDER_FRAME_POINTER y
-#./scripts/config --set-val CONFIG_PCI y
-#./scripts/config --set-val CONFIG_BLK_DEV_SD y
-#./scripts/config --set-val CONFIG_NET_VENDOR_INTEL y
-#./scripts/config --set-val CONFIG_E1000 y
-#./scripts/config --set-val CONFIG_RTC_CLASS y
-#./scripts/config --set-val CONFIG_ATA y
-#./scripts/config --set-val CONFIG_ATA_SFF y
-#./scripts/config --set-val CONFIG_ATA_BMDMA y
-#./scripts/config --set-val CONFIG_ATA_PIIX y
-#./scripts/config --set-val CONFIG_SERIAL_8250 y
-#./scripts/config --set-val CONFIG_SERIAL_8250_CONSOLE y
-#./scripts/config --set-val CONFIG_PANIC_TIMEOUT 1
-#./scripts/config --set-val CONFIG_NO_HZ_IDLE y
-#./scripts/config --set-val CONFIG_HIGH_RES_TIMERS y
-#./scripts/config --set-val CONFIG_RD_GZIP y
-#./scripts/config --set-val CONFIG_BINFMT_ELF y
-#./scripts/config --set-val CONFIG_BINFMT_SCRIPT y
-#./scripts/config --set-val CONFIG_BLK_DEV y
-#./scripts/config --set-val CONFIG_BLK_DEV_INITRD y
-#./scripts/config --set-val CONFIG_BLK_DEV_LOOP y
-#./scripts/config --set-val CONFIG_EXT4_FS y
-#./scripts/config --set-val CONFIG_EXT4_USE_FOR_EXT2 y
-#./scripts/config --set-val CONFIG_VFAT_FS y
-#./scripts/config --set-val CONFIG_FAT_DEFAULT_UTF8 y
-#./scripts/config --set-val CONFIG_MISC_FILESYSTEMS y
-#./scripts/config --set-val CONFIG_NLS_CODEPAGE_437 y
-#./scripts/config --set-val CONFIG_NLS_ISO8859_1 y
-#./scripts/config --set-val CONFIG_SQUASHFS y
-#./scripts/config --set-val CONFIG_SQUASHFS_XATTR y
-#./scripts/config --set-val CONFIG_SQUASHFS_ZLIB y
-#./scripts/config --set-val CONFIG_TMPFS y
-#./scripts/config --set-val CONFIG_TMPFS_POSIX_ACL y
-#./scripts/config --set-val CONFIG_DEVTMPFS y
-#./scripts/config --set-val CONFIG_DEVTMPFS_MOUNT y
-#./scripts/config --set-val CONFIG_NET y
-#./scripts/config --set-val CONFIG_NETDEVICES y
-#./scripts/config --set-val CONFIG_NET_CORE y
-#./scripts/config --set-val CONFIG_NETCONSOLE y
-#./scripts/config --set-val CONFIG_PACKET y
-#./scripts/config --set-val CONFIG_UNIX y
-#./scripts/config --set-val CONFIG_INET y
-#./scripts/config --set-val CONFIG_IPV6 y
-#./scripts/config --set-val CONFIG_ETHERNET y
-#./scripts/config --set-val CONFIG_COMPAT_32BIT_TIME y
-#./scripts/config --set-val CONFIG_EARLY_PRINTK y
-#./scripts/config --set-val CONFIG_IKCONFIG y
-#./scripts/config --set-val CONFIG_IKCONFIG_PROC y
-
 #make defconfig
 #make oldconfig
 make olddefconfig
@@ -155,19 +115,19 @@ cp arch/x86/boot/bzImage $VYASA/boot/vyasa
 cd $WS
 
 
-export HOST=x86_64-linux-gnu #overwriting to host
-#export HOST=x86_64-linux-musl #overwriting to host
+#export HOST=x86_64-linux-gnu #overwriting to host
+export HOST=x86_64-linux-musl #overwriting to host
 
-# Glibc
-tar -xf glibc-2.41.tar.xz
-mkdir glibc-2.41/build -p
-cd glibc-2.41/build
-../configure --host $HOST --disable-werror --libdir=/lib --prefix=/usr
-
-make -j16
-make DESTDIR=$VYASA install
-#CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
-cd $WS
+## Glibc
+#tar -xf glibc-2.41.tar.xz
+#mkdir glibc-2.41/build -p
+#cd glibc-2.41/build
+#../configure --host $HOST --disable-werror --libdir=/lib --prefix=/usr
+#
+#make -j16
+#make DESTDIR=$VYASA install
+##CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
+#cd $WS
 
 
 ## Bash
@@ -192,15 +152,15 @@ make -j16
 make DESTDIR=$VYASA install
 cd $WS
 
-# Ncurses
-tar -xf ncurses-6.5.tar.gz
-mkdir ncurses-6.5/build -p
-cd ncurses-6.5/build
-../configure --host $HOST --disable-werror --libdir=/lib --prefix=/usr
-
-make -j16
-make DESTDIR=$VYASA install
-cd $WS
+## Ncurses
+#tar -xf ncurses-6.5.tar.gz
+#mkdir ncurses-6.5/build -p
+#cd ncurses-6.5/build
+#../configure --host $HOST --disable-werror --libdir=/lib --prefix=/usr
+#
+#make -j16
+#make DESTDIR=$VYASA install
+#cd $WS
 
 
 ## Util-linux
@@ -227,8 +187,8 @@ cd $WS
 #cd $WS
 
 # LD
-#$VYASA/bin/ld --help # check
-$VYASA/bin/ld.so --help # check
+$VYASA/bin/ld --help # check
+#$VYASA/bin/ld.so --help # check
 #echo "/usr/lib" > $VYASA/etc/ld.so.config
 #echo "/usr/lib64" >> $VYASA/etc/ld.so.config
 
@@ -239,7 +199,7 @@ $RUNAS tee -a "$VYASA"/sbin/init > /dev/null << 'EOF' &&
 #!/bin/bash
 echo "### INIT SCRIPT ###"
 
-PATH=/sbin:/bin:/usr/sbin:/usr/sbin
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 mount -t devtmpfs none /dev
 mount -t proc none /proc
@@ -255,9 +215,9 @@ mount -t tmpfs none /tmp
 #mknod -m 444 /dev/urandom c 1 9
 #chown root:tty /dev/{console,ptmx,tty}
 
-ls -la /dev/{console,null,zero,ptmx,tty,random,urandom,ttyS*}
+#ls -la /dev/{console,null,zero,ptmx,tty,random,urandom,ttyS*}
 
-#echo -e "\nThis boot took $(cut -d' ' -f1 /proc/uptime) seconds\n"
+echo -e "\nThis boot took $(cut -d' ' -f1 /proc/uptime) seconds\n"
 exec /bin/bash
 EOF
 $RUNAS chmod +x "$VYASA"/sbin/init

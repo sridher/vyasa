@@ -9,157 +9,143 @@ set -o pipefail
 RUNAS="doas" # or sudo
 
 # Cleanup
-$RUNAS rm vyasa.qcow2 rootfs disk bash-5.2.37 coreutils-9.6 glibc-2.40 linux ncurses-6.5 util-linux-2.40.4 -rfd
-#$RUNAS rm vyasa.qcow2 rootfs disk toolchains bash-5.2.37 coreutils-9.6 glibc-2.40 linux ncurses-6.5 util-linux-2.40.4 -rfd
+$RUNAS rm vyasa.qcow2 rootfs disk bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 -rfd
+#$RUNAS rm vyasa.qcow2 rootfs disk toolchains bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 -rfd
 
 export WS=$(pwd)
 export VYASA=$(pwd)/rootfs
 
 #mkdir toolchains && cd toolchains
-#wget https://landley.net/bin/toolchains/25-03-2024/x86_64-linux-musl-cross.tar.xz
-##wget https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64/tarballs/x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
-#tar -xf x86_64-linux-musl-cross.tar.xz
+##wget https://landley.net/bin/toolchains/25-03-2024/x86_64-linux-musl-cross.tar.xz
+#wget https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64/tarballs/x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
+##tar -xf x86_64-linux-musl-cross.tar.xz
+#tar -xf x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
 #cd $WS
 
-export HOST=$WS/toolchains/x86_64-linux-musl-cross/bin/x86_64-linux-musl
-#export HOST=$WS/toolchains/x86-64--glibc--bleeding-edge-2024.05-1/bin/x86_64-buildroot-linux-gnu
+#export HOST=$WS/toolchains/x86_64-linux-musl-cross/bin/x86_64-linux-musl
+export HOST=$WS/toolchains/x86-64--glibc--bleeding-edge-2024.05-1/bin/x86_64-buildroot-linux-gnu
 export TOOL="$HOST"-
 export CC="$TOOL"gcc
 export CXX="$TOOL"g++
 
+# Rootfs dirs
+mkdir $VYASA/{boot,proc,sys,tmp,dev,usr} -p
+#mkdir $VYASA/usr/{lib,lib64,bin,sbin} -p
+cd $VYASA/
+mkdir usr/bin
+ln -s usr/bin bin
+#ln -s usr/sbin sbin
+#ln -s usr/lib lib
+#ln -s usr/lib64 lib64
+cd $WS
+# DEBUG:
+cp /tmp/nxjs/{ash,bash,dash,nu,mount} $VYASA/bin/
+
 # Sysroot
 mkdir $VYASA/boot -p
 export SYSROOT=$($CC --print-sysroot)
-cp -R "$SYSROOT"/* $VYASA/
+cp -R "$SYSROOT"/usr $VYASA/
+cp -R "$SYSROOT"/lib $VYASA/
 
 # Kernel
 tar -xf linux-6.13.5.tar.zst
 
 cd linux
 make distclean
-make CROSS_COMPILE=$TOOL allnoconfig
+make CROSS_COMPILE=$TOOL tinyconfig
 
 # Kernel config
 
-./scripts/config --set-val CONFIG_UNWINDER_FRAME_POINTER y
-./scripts/config --set-val CONFIG_PCI y
-./scripts/config --set-val CONFIG_BLK_DEV_SD y
-./scripts/config --set-val CONFIG_NET_VENDOR_INTEL y
-./scripts/config --set-val CONFIG_E1000 y
-./scripts/config --set-val CONFIG_RTC_CLASS y
-./scripts/config --set-val CONFIG_ATA y
-./scripts/config --set-val CONFIG_ATA_SFF y
-./scripts/config --set-val CONFIG_ATA_BMDMA y
-./scripts/config --set-val CONFIG_ATA_PIIX y
-./scripts/config --set-val CONFIG_SERIAL_8250 y
-./scripts/config --set-val CONFIG_SERIAL_8250_CONSOLE y
-./scripts/config --set-val CONFIG_PANIC_TIMEOUT 1
-./scripts/config --set-val CONFIG_NO_HZ_IDLE y
-./scripts/config --set-val CONFIG_HIGH_RES_TIMERS y
-./scripts/config --set-val CONFIG_RD_GZIP y
-./scripts/config --set-val CONFIG_BINFMT_ELF y
-./scripts/config --set-val CONFIG_BINFMT_SCRIPT y
-./scripts/config --set-val CONFIG_BLK_DEV y
-./scripts/config --set-val CONFIG_BLK_DEV_INITRD y
-./scripts/config --set-val CONFIG_BLK_DEV_LOOP y
-./scripts/config --set-val CONFIG_EXT4_FS y
-./scripts/config --set-val CONFIG_EXT4_USE_FOR_EXT2 y
-./scripts/config --set-val CONFIG_VFAT_FS y
-./scripts/config --set-val CONFIG_FAT_DEFAULT_UTF8 y
-./scripts/config --set-val CONFIG_MISC_FILESYSTEMS y
-./scripts/config --set-val CONFIG_NLS_CODEPAGE_437 y
-./scripts/config --set-val CONFIG_NLS_ISO8859_1 y
-./scripts/config --set-val CONFIG_SQUASHFS y
-./scripts/config --set-val CONFIG_SQUASHFS_XATTR y
-./scripts/config --set-val CONFIG_SQUASHFS_ZLIB y
-./scripts/config --set-val CONFIG_TMPFS y
-./scripts/config --set-val CONFIG_TMPFS_POSIX_ACL y
-./scripts/config --set-val CONFIG_DEVTMPFS y
-./scripts/config --set-val CONFIG_DEVTMPFS_MOUNT y
-./scripts/config --set-val CONFIG_NET y
-./scripts/config --set-val CONFIG_NETDEVICES y
-./scripts/config --set-val CONFIG_NET_CORE y
-./scripts/config --set-val CONFIG_NETCONSOLE y
-./scripts/config --set-val CONFIG_PACKET y
-./scripts/config --set-val CONFIG_UNIX y
-./scripts/config --set-val CONFIG_INET y
-./scripts/config --set-val CONFIG_IPV6 y
-./scripts/config --set-val CONFIG_ETHERNET y
-./scripts/config --set-val CONFIG_COMPAT_32BIT_TIME y
-./scripts/config --set-val CONFIG_EARLY_PRINTK y
-./scripts/config --set-val CONFIG_IKCONFIG y
-./scripts/config --set-val CONFIG_IKCONFIG_PROC y
+#64BIT
+#BLOCK
+#BINFMT_ELF
+#BINFMT_SCRIPT
+#PRINTK
+#DEVTMPFS
+#DEVTMPFS_MOUNT
+#PCI
+#TTY
+#SERIAL_8250
+#SERIAL_8250_CONSOLE
+#BLK_DEV_SD
+#ATA
+#ATA_PIIX
+#EXT4_FS
+#PROC_FS
+#SYSFS
 
-
-./scripts/config --set-val CONFIG_PRINTK y
-
-#CONFIG_OUTPUT_FORMAT="elf64-x86-64"
 ./scripts/config --set-val CONFIG_64BIT y
-./scripts/config --set-val CONFIG_X86_64 y
-
-#CONFIG_SWAP=y
 ./scripts/config --set-val CONFIG_BLOCK y
-./scripts/config --set-val CONFIG_BLK_DEV y
-./scripts/config --set-val CONFIG_BLOCK_LEGACY_AUTOLOAD y
-./scripts/config --set-val CONFIG_BLK_DEV_WRITE_MOUNTED y
-./scripts/config --set-val CONFIG_MSDOS_PARTITION y
-./scripts/config --set-val CONFIG_EFI_PARTITION y
-
-./scripts/config --set-val CONFIG_ELFCORE y
 ./scripts/config --set-val CONFIG_BINFMT_ELF y
 ./scripts/config --set-val CONFIG_BINFMT_SCRIPT y
-
-./scripts/config --set-val CONFIG_PCI y
-./scripts/config --set-val CONFIG_PCI_BIOS y
-./scripts/config --set-val CONFIG_PCI_DIRECT y
-./scripts/config --set-val CONFIG_PCI_GOANY y
-./scripts/config --set-val CONFIG_PCIE_BUS_DEFAULT y
-./scripts/config --set-val CONFIG_PCI_LOCKLESS_CONFIG y
-
+./scripts/config --set-val CONFIG_PRINTK y
 ./scripts/config --set-val CONFIG_DEVTMPFS y
 ./scripts/config --set-val CONFIG_DEVTMPFS_MOUNT y
-
-./scripts/config --set-val CONFIG_ATA y
-./scripts/config --set-val CONFIG_ATA_SFF y
-./scripts/config --set-val CONFIG_ATA_PIIX y
-./scripts/config --set-val CONFIG_SATA_PMP y
-./scripts/config --set-val CONFIG_SATA_HOST y
-
-./scripts/config --set-val CONFIG_SCSI y
-./scripts/config --set-val CONFIG_SCSI_DMA y
-./scripts/config --set-val CONFIG_SCSI_MOD y
-./scripts/config --set-val CONFIG_SCSI_COMMON y
-./scripts/config --set-val CONFIG_SCSI_LOWLEVEL y
-./scripts/config --set-val CONFIG_BLK_DEV_SD y
-./scripts/config --set-val CONFIG_BLK_DEV_BSG y
-
-
-./scripts/config --set-val CONFIG_VT y
-./scripts/config --set-val CONFIG_VT_CONSOLE y
+./scripts/config --set-val CONFIG_PCI y
 ./scripts/config --set-val CONFIG_TTY y
-
-
-./scripts/config --set-val CONFIG_SERIAL_8250_PCI y
-./scripts/config --set-val CONFIG_SERIAL_CORE y
-./scripts/config --set-val CONFIG_SERIAL_CORE_CONSOLE y
 ./scripts/config --set-val CONFIG_SERIAL_8250 y
 ./scripts/config --set-val CONFIG_SERIAL_8250_CONSOLE y
-
+./scripts/config --set-val CONFIG_BLK_DEV_SD y
+./scripts/config --set-val CONFIG_ATA y
+./scripts/config --set-val CONFIG_ATA_PIIX y
 ./scripts/config --set-val CONFIG_EXT4_FS y
-./scripts/config --set-val CONFIG_EXT4_USE_FOR_EXT2 y
-./scripts/config --set-val CONFIG_VFAT_FS y
-
-./scripts/config --set-val CONFIG_KERNFS y
 ./scripts/config --set-val CONFIG_PROC_FS y
 ./scripts/config --set-val CONFIG_SYSFS y
 
 #Other options
-#./scripts/config --set-val CONFIG_GENERIC_CPU y
 
+#./scripts/config --set-val CONFIG_UNWINDER_FRAME_POINTER y
+#./scripts/config --set-val CONFIG_PCI y
+#./scripts/config --set-val CONFIG_BLK_DEV_SD y
+#./scripts/config --set-val CONFIG_NET_VENDOR_INTEL y
+#./scripts/config --set-val CONFIG_E1000 y
+#./scripts/config --set-val CONFIG_RTC_CLASS y
+#./scripts/config --set-val CONFIG_ATA y
+#./scripts/config --set-val CONFIG_ATA_SFF y
+#./scripts/config --set-val CONFIG_ATA_BMDMA y
+#./scripts/config --set-val CONFIG_ATA_PIIX y
+#./scripts/config --set-val CONFIG_SERIAL_8250 y
+#./scripts/config --set-val CONFIG_SERIAL_8250_CONSOLE y
+#./scripts/config --set-val CONFIG_PANIC_TIMEOUT 1
+#./scripts/config --set-val CONFIG_NO_HZ_IDLE y
+#./scripts/config --set-val CONFIG_HIGH_RES_TIMERS y
+#./scripts/config --set-val CONFIG_RD_GZIP y
+#./scripts/config --set-val CONFIG_BINFMT_ELF y
+#./scripts/config --set-val CONFIG_BINFMT_SCRIPT y
+#./scripts/config --set-val CONFIG_BLK_DEV y
+#./scripts/config --set-val CONFIG_BLK_DEV_INITRD y
+#./scripts/config --set-val CONFIG_BLK_DEV_LOOP y
+#./scripts/config --set-val CONFIG_EXT4_FS y
+#./scripts/config --set-val CONFIG_EXT4_USE_FOR_EXT2 y
+#./scripts/config --set-val CONFIG_VFAT_FS y
+#./scripts/config --set-val CONFIG_FAT_DEFAULT_UTF8 y
+#./scripts/config --set-val CONFIG_MISC_FILESYSTEMS y
+#./scripts/config --set-val CONFIG_NLS_CODEPAGE_437 y
+#./scripts/config --set-val CONFIG_NLS_ISO8859_1 y
+#./scripts/config --set-val CONFIG_SQUASHFS y
+#./scripts/config --set-val CONFIG_SQUASHFS_XATTR y
+#./scripts/config --set-val CONFIG_SQUASHFS_ZLIB y
+#./scripts/config --set-val CONFIG_TMPFS y
+#./scripts/config --set-val CONFIG_TMPFS_POSIX_ACL y
+#./scripts/config --set-val CONFIG_DEVTMPFS y
+#./scripts/config --set-val CONFIG_DEVTMPFS_MOUNT y
+#./scripts/config --set-val CONFIG_NET y
+#./scripts/config --set-val CONFIG_NETDEVICES y
+#./scripts/config --set-val CONFIG_NET_CORE y
+#./scripts/config --set-val CONFIG_NETCONSOLE y
+#./scripts/config --set-val CONFIG_PACKET y
+#./scripts/config --set-val CONFIG_UNIX y
+#./scripts/config --set-val CONFIG_INET y
+#./scripts/config --set-val CONFIG_IPV6 y
+#./scripts/config --set-val CONFIG_ETHERNET y
+#./scripts/config --set-val CONFIG_COMPAT_32BIT_TIME y
+#./scripts/config --set-val CONFIG_EARLY_PRINTK y
+#./scripts/config --set-val CONFIG_IKCONFIG y
+#./scripts/config --set-val CONFIG_IKCONFIG_PROC y
 
 #make defconfig
 #make oldconfig
-#make olddefconfig
+make olddefconfig
 
 mv .config vyasa-miniconfig 
 make CROSS_COMPILE=$TOOL allnoconfig KCONFIG_ALLCONFIG=vyasa-miniconfig
@@ -169,18 +155,31 @@ cp arch/x86/boot/bzImage $VYASA/boot/vyasa
 cd $WS
 
 
-export HOST=x86_64-linux-musl #overwriting to host
+export HOST=x86_64-linux-gnu #overwriting to host
+#export HOST=x86_64-linux-musl #overwriting to host
 
-# Bash
-# libtinfo.so.6 not found
-tar -xf bash-5.2.37.tar.gz
-mkdir bash-5.2.37/build -p
-cd bash-5.2.37/build
-../configure --host $HOST --prefix=/usr
+# Glibc
+tar -xf glibc-2.41.tar.xz
+mkdir glibc-2.41/build -p
+cd glibc-2.41/build
+../configure --host $HOST --disable-werror --libdir=/lib --prefix=/usr
 
 make -j16
 make DESTDIR=$VYASA install
+#CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
 cd $WS
+
+
+## Bash
+## libtinfo.so.6 not found
+#tar -xf bash-5.2.37.tar.gz
+#mkdir bash-5.2.37/build -p
+#cd bash-5.2.37/build
+#../configure --host $HOST --disable-werror --prefix=/usr
+#
+#make -j16
+#make DESTDIR=$VYASA install
+#cd $WS
 
 # Coreutils
 tar -xf coreutils-9.6.tar.xz
@@ -204,70 +203,76 @@ make DESTDIR=$VYASA install
 cd $WS
 
 
-# Util-linux
-# FIX: `NIXOS` line 1: ../tools/all_syscalls: cannot execute: required file not found
-if [ ! -f /bin/bash ]; then
-    echo "Bash not found!\n"
-    echo "---------------"
-    echo "Symlinking bash"
-    echo "---------------"
-    $RUNAS ln -s /run/current-system/sw/bin/bash /bin/bash 
-fi
-
-tar -xf util-linux-2.40.4.tar.xz
-mkdir util-linux-2.40.4/build -p
-cd util-linux-2.40.4
-./autogen.sh
-cd build
-../configure --host $HOST --disable-liblastlog2 --prefix=/usr
-
-make -j16
-# FIX: `Flake` line 1: make: command not found
-MAKE=$(which make)
-$RUNAS $MAKE DESTDIR=$VYASA install
-cd $WS
+## Util-linux
+## FIX: `NIXOS` line 1: ../tools/all_syscalls: cannot execute: required file not found
+#if [ ! -f /bin/bash ]; then
+#    echo "Bash not found!\n"
+#    echo "---------------"
+#    echo "Symlinking bash"
+#    echo "---------------"
+#    $RUNAS ln -s /run/current-system/sw/bin/bash /bin/bash 
+#fi
+#
+#tar -xf util-linux-2.40.4.tar.xz
+#mkdir util-linux-2.40.4/build -p
+#cd util-linux-2.40.4
+#./autogen.sh
+#cd build
+#../configure --host $HOST --disable-liblastlog2 --prefix=/usr
+#
+#make -j16
+## FIX: `Flake` line 1: make: command not found
+#MAKE=$(which make)
+#$RUNAS $MAKE DESTDIR=$VYASA install
+#cd $WS
 
 # LD
-$VYASA/bin/ld --help # check
-#$VYASA/bin/ld.so --help # check
+#$VYASA/bin/ld --help # check
+$VYASA/bin/ld.so --help # check
 #echo "/usr/lib" > $VYASA/etc/ld.so.config
 #echo "/usr/lib64" >> $VYASA/etc/ld.so.config
 
 
-# Rootfs dirs
-mkdir rootfs/{boot,proc,sys,dev,usr} -p
-mkdir rootfs/usr/{lib,lib64,bin,sbin} -p
-#cd rootfs/
-#ln -s usr/bin bin
-#ln -s usr/sbin sbin
-#ln -s usr/lib lib
-#ln -s usr/lib64 lib64
-#cd ..
-
-
+echo "Admin authentication......"
 # init
-$RUNAS cat > "$VYASA"/sbin/init << 'EOF' &&
+$RUNAS tee -a "$VYASA"/sbin/init > /dev/null << 'EOF' &&
 #!/bin/bash
 echo "### INIT SCRIPT ###"
-mkdir /proc /sys /tmp
+
+PATH=/sbin:/bin:/usr/sbin:/usr/sbin
+
+mount -t devtmpfs none /dev
 mount -t proc none /proc
 mount -t sysfs none /sys
 mount -t tmpfs none /tmp
-echo -e "\nThis boot took $(cut -d' ' -f1 /proc/uptime) seconds\n"
+
+#mknod -m 622 /dev/console c 5 1
+#mknod -m 666 /dev/null c 1 3
+#mknod -m 666 /dev/zero c 1 5
+#mknod -m 666 /dev/ptmx c 5 2
+#mknod -m 666 /dev/tty c 5 0 # <--
+#mknod -m 444 /dev/random c 1 8
+#mknod -m 444 /dev/urandom c 1 9
+#chown root:tty /dev/{console,ptmx,tty}
+
+ls -la /dev/{console,null,zero,ptmx,tty,random,urandom,ttyS*}
+
+#echo -e "\nThis boot took $(cut -d' ' -f1 /proc/uptime) seconds\n"
 exec /bin/bash
 EOF
 $RUNAS chmod +x "$VYASA"/sbin/init
 
 # fdisk
 cd $WS
-qemu-img create -f qcow2 vyasa.qcow2 5G
+qemu-img create -f qcow2 vyasa.qcow2 2G
 
 #lsmod | grep nbd
 #modprobe nbd max_parts=8
 lsmod | grep nbd
 
 $RUNAS qemu-nbd --connect=/dev/nbd0 vyasa.qcow2
-#❯ doas sfdisk -d /dev/nbd0 > vyasa.sfdisk
+sleep 5
+
 $RUNAS fdisk /dev/nbd0 <<EOF
 n
 p
@@ -295,10 +300,10 @@ $RUNAS grub-install --target=i386-pc --root-directory=$WS/disk --no-floppy --mod
 $RUNAS tee -a $WS/disk/boot/grub/grub.cfg > /dev/null <<EOF
 menuentry 'Vyasa' {
     set root='(hd0,1)'
-    linux /boot/vyasa root=/dev/sda1 rw console=ttyS0
+    linux /boot/vyasa root=/dev/sda1 rw 
 }
 EOF
-
+#console=ttyS0
 
 sync
 sync

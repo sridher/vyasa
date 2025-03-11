@@ -55,6 +55,7 @@
 
             pkgs.grub2
             pkgs.libnbd
+            pkgs.libguestfs
             pkgs.qemu-utils
             #pkgs.qemu_full
             #pkgs.debootstrap

@@ -2,6 +2,9 @@ linux
 linux-6.13.5.tar.zst
 linux-6.13.5.tar.zstd
 
+binutils-2.44
+binutils-2.44.tar.xz
+
 toybox-0.8.12
 toybox-0.8.12.tar.gz
 

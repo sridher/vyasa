@@ -67,14 +67,14 @@ MAKE=$(which make)
 mkdir -p "$VYASA"/{boot,dev,etc/rc,home,mnt,proc,root,sys,tmp/run,usr/{bin,sbin,lib},var/run} &&
 chmod a+rwxt "$VYASA"/tmp && ln -s usr/{bin,sbin,lib} tmp/run "$VYASA"
 # DEBUG:
-cp /tmp/nxjs/{ash,bash,dash,fish,micro,nu,ping,wget} $VYASA/bin/
+cp /tmp/nxjs/{ash,bash,dash,fish,micro,nu,ping} $VYASA/bin/
 
 # init
 $RUNAS tee -a "$VYASA"/sbin/init > /dev/null << 'EOF' &&
 #!/bin/bash
 echo -e "\e[1;36m### INIT SCRIPT ###\e[0m"
 
-export HOME=/home PATH=/bin:/sbin:/usr/bin:/usr/sbin
+export HOME=/home PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 
 mount -t devtmpfs none /dev
 mount -t proc none /proc
@@ -125,8 +125,8 @@ $RUNAS chmod +x "$VYASA"/sbin/init
 
 # Distro
 $RUNAS tee -a "$VYASA"/etc/passwd > /dev/null << 'EOF' &&
-root:x:0:0:root:/root:/bin/sh
-guest:x:500:500:guest:/home/guest:/bin/sh
+root:x:0:0:root:/root:/bin/bash
+guest:x:500:500:guest:/home/guest:/bin/bash
 nobody:x:65534:65534:nobody:/proc/self:/dev/null
 EOF
 
@@ -151,8 +151,8 @@ EOF
 
 $RUNAS tee -a "$VYASA"/etc/environment > /dev/null << 'EOF' &&
 #Only programs compiled with PAM (Pluggable Authentication Module) support are able to use it (primarily login systems, which subsequently start the shell or user environment).     
-PATH=/usr/bin:/usr/sbin
-#PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
+#PATH=/usr/bin:/usr/sbin
+PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
 EOF
 
 $RUNAS tee -a "$VYASA"/etc/profile > /dev/null << 'EOF' &&
@@ -165,7 +165,7 @@ if [ -d /etc/profile.d ]; then
   done
   unset i
 fi
-export HOME=/home PATH=/bin:/sbin:/usr/bin:/usr/sbin
+export HOME=/home PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 EOF
 
 ## Sysroot
@@ -443,7 +443,7 @@ SECONDS=0
 tar -xf libcap-2.75.tar.gz
 cd libcap-2.75
 make -j16
-$RUNAS $MAKE DESTDIR=$VYASA install
+$RUNAS $MAKE DESTDIR=$VYASA/lib install
 cd $WS
 
 duration=$SECONDS

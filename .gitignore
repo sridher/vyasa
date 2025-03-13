@@ -5,6 +5,17 @@ linux-6.13.5.tar.zst
 linux-6.13.5.tar.zstd
 
 m4-1.4.19
+diffutils-3.11
+file-5.46
+findutils-4.10.0
+gawk-5.3.1
+grep-3.11
+gzip-1.13
+make-4.4.1
+patch-2.7.6
+sed-4.9
+tar-1.35
+xz-5.6.4
 
 binutils-2.44
 binutils-2.44.tar.xz

@@ -214,10 +214,10 @@ nameserver 1.1.1.1
 nameserver 8.8.8.8
 EOF
 
-mkdir "$VYASA"/etc/ssl/certs -p
-wget https://curl.haxx.se/ca/cacert.pem
-cp cacert.pem "$VYASA"/etc/ssl/certs/ca-certificates.crt
-rm cacert.pem 
+#mkdir "$VYASA"/etc/ssl/certs -p
+#wget https://curl.haxx.se/ca/cacert.pem
+#cp cacert.pem "$VYASA"/etc/ssl/certs/ca-certificates.crt
+#rm cacert.pem 
 
 tee -a "$VYASA"/etc/os-release > /dev/null << 'EOF' &&
 NAME="Vyasa linux"
@@ -267,9 +267,328 @@ echo -e "\e[1;33mm4 compile took: $((duration / 60)) minutes and $((duration % 6
 TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
-#../configure --prefix=$LFS/tools \
-#             --with-sysroot=$LFS \
-#             --target=$LFS_TGT   \
+# Ncurses
+tar -xf sources/ncurses-6.5.tar.gz
+
+mkdir ncurses-6.5/tuild -p
+cd ncurses-6.5/tuild
+
+../configure AWK=gawk
+make -C include
+make -C progs tic
+cd $WS
+
+mkdir ncurses-6.5/build -p
+cd ncurses-6.5/build
+
+../configure --prefix=/usr                \
+            --host=$VYASA_TGT            \
+            --build=$(./config.guess)    \
+            --mandir=/usr/share/man      \
+            --with-manpage-format=normal \
+            --with-shared                \
+            --without-normal             \
+            --with-cxx-shared            \
+            --without-debug              \
+            --without-ada                \
+            --disable-stripping          \
+            AWK=gawk
+
+make -j16
+
+$RUNAS $MAKE DESTDIR=$VYASA TIC_PATH=$(pwd)/../tuild/progs/tic install
+ln -sv libncursesw.so $VYASA/usr/lib/libncurses.so
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mncurces compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# Bash
+tar -xf sources/bash-5.2.37.tar.gz
+mkdir bash-5.2.37/build -p
+cd bash-5.2.37/build
+
+#CFLAGS=-Wno-error -Wno-error=implicit-function-declaration
+#[-Wimplicit-function-declaration]
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(build-aux/config.guess)\
+            --without-bash-malloc \
+            CFLAGS="-Wno-error=implicit-function-declaration"
+
+make -j16
+
+$RUNAS $MAKE DESTDIR=$VYASA install
+ln -sv bash $VYASA/bin/sh
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mBash compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# Coreutils
+tar -xf sources/coreutils-9.6.tar.xz
+mkdir coreutils-9.6/build -p
+cd coreutils-9.6/build
+
+export FORCE_UNSAFE_CONFIGURE=1 # error: you should not run configure as root
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(build-aux/config.guess)\
+            --disable-libcap  \
+            --without-selinux 
+
+make -j16
+
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mcoreutils compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# Diffutils
+# ----------------------------------
+tar -xf sources/diffutils-3.11.tar.xz
+mkdir diffutils-3.11/build -p
+cd diffutils-3.11/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(build-aux/config.guess)
+
+make -j16
+
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mdiffutils compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# File
+# ----------------------------------
+tar -xf ./sources/file-5.46.tar.gz
+
+mkdir file-5.46/tuild -p
+cd file-5.46/tuild
+
+../configure --disable-bzlib      \
+             --disable-libseccomp \
+             --disable-xzlib      \
+             --disable-zlib
+make
+cd $WS
+
+mkdir file-5.46/build -p
+cd file-5.46/build
+
+../configure --prefix=/usr --host=$VYASA_TGT --build=$(config.guess)
+
+make FILE_COMPILE=$(pwd)/../tuild/src/file -j16
+
+$RUNAS $MAKE DESTDIR=$VYASA install
+
+rm -vf $VYASA/usr/lib/libmagic.la
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mfile compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# findutils
+# -------------------------------
+tar -xf sources/findutils-4.10.0.tar.xz
+mkdir findutils-4.10.0/build -p
+cd findutils-4.10.0/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(build-aux/config.guess)
+
+make -j16
+
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mfindutils compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# gwak
+# -------------------------------
+tar -xf sources/gawk-5.3.1.tar.xz
+mkdir gawk-5.3.1/build -p
+cd gawk-5.3.1/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(build-aux/config.guess)
+
+make -j16
+
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mgawk compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# grep
+# -------------------------------
+tar -xf sources/grep-3.11.tar.xz
+mkdir grep-3.11/build -p
+cd grep-3.11/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(build-aux/config.guess)
+
+make -j16
+
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mgrep compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# gzip
+# -------------------------------
+tar -xf sources/gzip-1.13.tar.xz
+mkdir gzip-1.13/build -p
+cd gzip-1.13/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(build-aux/config.guess)
+
+make -j16
+
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mgzip compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# make
+# -------------------------------
+tar -xf sources/make-4.4.1.tar.gz
+mkdir make-4.4.1/build -p
+cd make-4.4.1/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(build-aux/config.guess)
+
+make -j16
+
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mmake compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# patch
+# -------------------------------
+tar -xf sources/patch-2.7.6.tar.xz
+mkdir patch-2.7.6/build -p
+cd patch-2.7.6/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(build-aux/config.guess)
+
+make -j16
+
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mpatch compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# sed
+# -------------------------------
+tar -xf sources/sed-4.9.tar.xz
+mkdir sed-4.9/build -p
+cd sed-4.9/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(build-aux/config.guess)
+
+make -j16
+
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mpatch compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# tar
+# -------------------------------
+tar -xf sources/tar-1.35.tar.xz
+mkdir tar-1.35/build -p
+cd tar-1.35/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(build-aux/config.guess)
+
+make -j16
+
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mtar compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# xz
+# -------------------------------
+tar -xf sources/xz-5.6.4.tar.xz
+mkdir xz-5.6.4/build -p
+cd xz-5.6.4/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(build-aux/config.guess)\
+            --disable-static                  \
+
+make -j16
+
+$RUNAS $MAKE DESTDIR=$VYASA install
+rm -vf $VYASA/usr/lib/liblzma.la
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mxz compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+
+
+#../configure --prefix=$VYASA/tools \
+#             --with-sysroot=$VYASA \
+#             --target=$VYASA_TGT   \
 #             --disable-nls       \
 #             --enable-gprofng=no \
 #             --disable-werror    \
@@ -279,7 +598,7 @@ SECONDS=0
 #../configure                   \
 #    --prefix=/usr              \
 #    --build=$(../config.guess) \
-#    --host=$LFS_TGT            \
+#    --host=$VYASA_TGT            \
 #    --disable-nls              \
 #    --enable-shared            \
 #    --enable-gprofng=no        \
@@ -289,7 +608,12 @@ SECONDS=0
 #    --enable-default-hash-style=gnu
 
 # binutils-2.44
-tar -xf sources/binutils-2.44.tar.xz
+tar -xf binutils-2.44.tar.xz
+
+cd binutils-2.44
+sed '6031s/$add_dir//' -i ltmain.sh
+cd $WS
+
 mkdir binutils-2.44/build -p
 cd binutils-2.44/build
 #../configure --host VYASA_TGT --prefix=/usr
@@ -306,8 +630,9 @@ cd binutils-2.44/build
     --enable-default-hash-style=gnu
 
 make -j16
-make DESTDIR=$VYASA install
+$RUNAS $MAKE DESTDIR=$VYASA install
 #CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
+rm -v $VYASA/usr/lib/lib{bfd,ctf,ctf-nobfd,opcodes,sframe}.{a,la}
 cd $WS
 
 duration=$SECONDS
@@ -416,75 +741,32 @@ SECONDS=0
 #❯ nix build -L nixpkgs#pkgsStatic.fish
 #❯ nix build -L nixpkgs#pkgsStatic.toybox
 
-## Glibc
-#tar -xf glibc-2.41.tar.xz
-#mkdir glibc-2.41/build -p
-#cd glibc-2.41/build
-#../configure --host $HOST --disable-werror libc_cv_forced_unwind=yes libc_cv_c_cleanup=yes --libdir=/lib --prefix=/usr
-#
-#make -j16
-#make DESTDIR=$VYASA install
-##CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
-#cd $WS
-
-# musl-libc
-tar -xf musl-1.2.5.tar.gz
-mkdir musl-1.2.5/build -p
-cd musl-1.2.5/build
-../configure --host $HOST --disable-werror --libdir=/lib --prefix=/usr
+# Glibc
+tar -xf glibc-2.41.tar.xz
+mkdir glibc-2.41/build -p
+cd glibc-2.41/build
+../configure --host $HOST --disable-werror libc_cv_forced_unwind=yes libc_cv_c_cleanup=yes --libdir=/lib --prefix=/usr
 
 make -j16
-$RUNAS $MAKE DESTDIR=$VYASA install
+make DESTDIR=$VYASA install
 #CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
 cd $WS
 
-duration=$SECONDS
-echo -e "\e[1;33mmusllibc compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
-TOTALTIME=$((TOTALTIME + duration))
-SECONDS=0
-
-## Bash
-## bash: xmalloc: ../locale.c:84: cannot allocate 6 bytes (0 bytes allocated
-#tar -xf bash-5.2.37.tar.gz
-#mkdir bash-5.2.37/build -p
-#cd bash-5.2.37/build
-#../configure --host $HOST --disable-werror --prefix=/usr
+## musl-libc
+#tar -xf musl-1.2.5.tar.gz
+#mkdir musl-1.2.5/build -p
+#cd musl-1.2.5/build
+#../configure --host $HOST --disable-werror --libdir=/lib --prefix=/usr
 #
 #make -j16
-#make DESTDIR=$VYASA install
+#$RUNAS $MAKE DESTDIR=$VYASA install
+##CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
 #cd $WS
-
-# Coreutils
-tar -xf coreutils-9.6.tar.xz
-mkdir coreutils-9.6/build -p
-cd coreutils-9.6/build
-export FORCE_UNSAFE_CONFIGURE=1 # error: you should not run configure as root
-../configure --host $HOST --without-selinux --disable-libcap --prefix=/usr
-
-make -j16
-$RUNAS $MAKE DESTDIR=$VYASA install
-cd $WS
-
-duration=$SECONDS
-echo -e "\e[1;33mcoreutils compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
-TOTALTIME=$((TOTALTIME + duration))
-SECONDS=0
-
-# Ncurses
-# TODO: https://www.linuxfromscratch.org/lfs/view/development/chapter06/ncurses.html
-tar -xf ncurses-6.5.tar.gz
-mkdir ncurses-6.5/build -p
-cd ncurses-6.5/build
-../configure --host $HOST --disable-werror --libdir=/lib --prefix=/usr
-
-make -j16
-$RUNAS $MAKE DESTDIR=$VYASA install
-cd $WS
-
-duration=$SECONDS
-echo -e "\e[1;33mncurces compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
-TOTALTIME=$((TOTALTIME + duration))
-SECONDS=0
+#
+#duration=$SECONDS
+#echo -e "\e[1;33mmusllibc compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+#TOTALTIME=$((TOTALTIME + duration))
+#SECONDS=0
 
 # Util-linux
 # FIX: `NIXOS` line 1: ../tools/all_syscalls: cannot execute: required file not found
@@ -527,22 +809,22 @@ echo -e "\e[1;33miproute compile took: $((duration / 60)) minutes and $((duratio
 TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
-## elfutils
-#tar -xf elfutils-0.192.tar.bz2
-#mkdir elfutils-0.192/build -p
-#cd elfutils-0.192/
-#autoreconf -i -f
-#cd build/
-#../configure --host $HOST --disable-option-checking --enable-maintainer-mode --prefix=/usr
-#
-#make -j16
-#make DESTDIR=$VYASA install
-#cd $WS
-#
-#duration=$SECONDS
-#echo -e "\e[1;33melfutils compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
-#TOTALTIME=$((TOTALTIME + duration))
-#SECONDS=0
+# elfutils
+tar -xf elfutils-0.192.tar.bz2
+mkdir elfutils-0.192/build -p
+cd elfutils-0.192/
+autoreconf -i -f
+cd build/
+../configure --host $HOST --disable-option-checking --enable-maintainer-mode --prefix=/usr
+
+make -j16
+make DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33melfutils compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
 
 
 # openssl

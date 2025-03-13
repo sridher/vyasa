@@ -2,6 +2,9 @@ sources
 sources/*.{md5,minisig,sha,sha1,sha256,sha512,sig}
 sources/*.tar.{bz2,gz,xz,zst,zstd}
 
+builds
+vbuilds
+
 linux
 linux-6.13.5.tar.zst
 linux-6.13.5.tar.zstd

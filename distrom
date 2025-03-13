@@ -261,6 +261,27 @@ echo -e "\e[1;33mPre init took: $((duration / 60)) minutes and $((duration % 60)
 TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
+# gmp
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/gmp-6.3.0.tar.xz
+mkdir gmp-6.3.0/build -p
+cd gmp-6.3.0/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(build-aux/config.guess)
+
+make -j16
+
+make DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mgmp-6.3.0 compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
 # M4
 # ------------------------------
 cd $WS/builds
@@ -1023,7 +1044,7 @@ EOF
 
 # fdisk
 cd $WS
-qemu-img create -f qcow2 vyasa.qcow2 2G
+qemu-img create -f qcow2 vyasa.qcow2 7G
 
 #lsmod | grep nbd
 #modprobe nbd max_parts=8

@@ -37,8 +37,13 @@ TOTALTIME=0
 $RUNAS rm vyasa.qcow2 rootfs disk binutils-2.44 bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 iproute2-6.13.0 elfutils-0.192 openssl-3.4.1 wget-1.25.0 libcap-2.75 zlib-1.3.1 zstd-1.5.7 musl-1.2.5 toybox-0.8.12 -rfd
 #$RUNAS rm vyasa.qcow2 rootfs disk binutils-2.44 toolchains bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 iproute2-6.13.0 elfutils-0.192 openssl-3.4.1 wget-1.25.0 libcap-2.75 zlib-1.3.1 zstd-1.5.7 musl-1.2.5 toybox-0.8.12 -rfd
 
-export WS=$(pwd)
-export VYASA=$(pwd)/rootfs
+WS=$(pwd)
+VYASA=$(pwd)/rootfs
+VYASA_TGT=$(uname -m)-vyasa-linux-gnu
+#VYASA_TGT=$(uname -m)-vyasa-linux-musl
+#HOST=x86_64-linux-gnu #overwriting to host
+#HOST=x86_64-linux-musl #overwriting to host
+
 
 #mkdir toolchains 
 #cd toolchains
@@ -48,12 +53,20 @@ export VYASA=$(pwd)/rootfs
 ##tar -xf x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
 #cd $WS
 
-export HOST=$WS/toolchains/x86_64-linux-musl-cross/bin/x86_64-linux-musl
-#export HOST=$WS/toolchains/x86-64--glibc--bleeding-edge-2024.05-1/bin/x86_64-buildroot-linux-gnu
-export TOOL="$HOST"-
-export CC="$TOOL"gcc
-export CXX="$TOOL"g++
+#TOOLCHAIN=$WS/toolchains/x86_64-linux-musl-cross/bin/x86_64-linux-musl
+TOOLCHAIN=$WS/toolchains/x86-64--glibc--bleeding-edge-2024.05-1/bin/x86_64-buildroot-linux-gnu
+TOOL="$TOOLCHAIN"-
+CC="$TOOL"gcc
+CXX="$TOOL"g++
 MAKE=$(which make)
+
+## Sysroot
+SYSROOT=$($CC --print-sysroot)
+#export SYSROOT=$($CC --print-sysroot)
+#cp -R "$SYSROOT"/bin $VYASA/
+#cp -R "$SYSROOT"/include $VYASA/
+#cp -R "$SYSROOT"/lib $VYASA/
+
 
 ## FIX: `Workaround` mkpasswd.c:(.text.mkpasswd_main+0x1cc): undefined reference to `crypt'
 #docker build -t toybox:0.8.12 .
@@ -230,37 +243,77 @@ fi
 export HOME=/home PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 EOF
 
-## Sysroot
-#export SYSROOT=$($CC --print-sysroot)
-#cp -R "$SYSROOT"/bin $VYASA/
-#cp -R "$SYSROOT"/include $VYASA/
-#cp -R "$SYSROOT"/lib $VYASA/
-
 duration=$SECONDS
 echo -e "\e[1;33mPre init took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
 TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
-#export HOST=x86_64-linux-gnu #overwriting to host
-export HOST=x86_64-linux-musl #overwriting to host
-export SYSROOT=$($CC --print-sysroot)
+# M4
+tar -xf sources/m4-1.4.19.tar.xz
+mkdir m4-1.4.19/build -p
+cd m4-1.4.19/build
 
-## binutils-2.44
-#tar -xf binutils-2.44.tar.xz
-#mkdir binutils-2.44/build -p
-#cd binutils-2.44/build
-#../configure --host $HOST --prefix=/usr
-#❯ ../configure --target $HOST --prefix=/usr --with-sysroot= --disable-nls --disable-werror
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(build-aux/config.guess)
+
+make -j16
+
+make DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mm4 compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+#../configure --prefix=$LFS/tools \
+#             --with-sysroot=$LFS \
+#             --target=$LFS_TGT   \
+#             --disable-nls       \
+#             --enable-gprofng=no \
+#             --disable-werror    \
+#             --enable-new-dtags  \
+#             --enable-default-hash-style=gnu
 #
-#make -j16
-#make DESTDIR=$VYASA install
-##CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
-#cd $WS
-#
-#duration=$SECONDS
-#echo -e "\e[1;33mbinutils compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
-#TOTALTIME=$((TOTALTIME + duration))
-#SECONDS=0
+#../configure                   \
+#    --prefix=/usr              \
+#    --build=$(../config.guess) \
+#    --host=$LFS_TGT            \
+#    --disable-nls              \
+#    --enable-shared            \
+#    --enable-gprofng=no        \
+#    --disable-werror           \
+#    --enable-64-bit-bfd        \
+#    --enable-new-dtags         \
+#    --enable-default-hash-style=gnu
+
+# binutils-2.44
+tar -xf sources/binutils-2.44.tar.xz
+mkdir binutils-2.44/build -p
+cd binutils-2.44/build
+#../configure --host VYASA_TGT --prefix=/usr
+../configure                    \
+    --prefix=/usr               \
+    --host=$VYASA_TGT           \
+    --build=$(../config.guess)  \
+    --enable-shared             \
+    --enable-gprofng=no         \
+    --disable-nls               \
+    --disable-werror            \
+    --enable-64-bit-bfd         \
+    --enable-new-dtags          \
+    --enable-default-hash-style=gnu
+
+make -j16
+make DESTDIR=$VYASA install
+#CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mbinutils compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
 
 
 # Kernel
@@ -576,13 +629,12 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 # LD
-echo -e "\e[1;32m$($VYASA/lib/libc.so $VYASA/usr/bin/uname -a)\e[0m"
+#echo -e "\e[1;32m$($VYASA/lib/libc.so $VYASA/usr/bin/uname -a)\e[0m"
 #ldconfig /usr/local/lib64/
 #openssl version -a
 #echo "/lib:/usr/local/lib:/usr/lib" > /etc/ld-musl-x86_64.path
-
 #$VYASA/bin/ld --help # check
-#$VYASA/bin/ld.so --help # check
+$VYASA/bin/ld.so --help # check
 #echo -e "\e[1;33m/usr/lib" > $VYASA/etc/ld.so.config
 #echo -e "\e[1;33m/usr/lib64" >> $VYASA/etc/ld.so.config
 

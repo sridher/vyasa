@@ -39,7 +39,7 @@
             pkgs.bison
             pkgs.ncurses
 
-            pkgs.gcc
+            #pkgs.gcc
 
             pkgs.autoconf
             pkgs.automake
@@ -60,10 +60,10 @@
             #pkgs.qemu_full
             #pkgs.debootstrap
 
-            #pkgs.lld_19
-            #pkgs.clang_19
-            #pkgs.clang-tools_19
-            #pkgs.llvmPackages_19.libllvm
+            pkgs.lld_19
+            pkgs.clang_19
+            pkgs.clang-tools_19
+            pkgs.llvmPackages_19.libllvm
 
             pkgs.starship
           ];

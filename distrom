@@ -30,14 +30,27 @@ $RUNAS echo -e "\e[1;36m$(uname -a)\e[0m"
 
 $RUNAS modprobe nbd max_parts=8
 
+# FIX: `NIXOS` : ../tools/all_syscalls: cannot execute: required file not found
+# Applications expecting absolute path
+if [ ! -f /bin/bash ]; then
+    echo -e "\e[1;31mBash not found!\n"
+    echo -e "\e[1;30m---------------"
+    echo -e "\e[1;34mSymlinking bash"
+    echo -e "\e[1;30m---------------"
+    $RUNAS ln -s /run/current-system/sw/bin/bash /bin/bash 
+    $RUNAS ln -s /etc/profiles/per-user/js/bin/python3 /usr/bin
+fi
+
+
 # Cleanup
 SECONDS=0
 TOTALTIME=0
 
-$RUNAS rm vyasa.qcow2 rootfs disk binutils-2.44 bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 iproute2-6.13.0 elfutils-0.192 openssl-3.4.1 wget-1.25.0 libcap-2.75 zlib-1.3.1 zstd-1.5.7 musl-1.2.5 toybox-0.8.12 -rfd
-#$RUNAS rm vyasa.qcow2 rootfs disk binutils-2.44 toolchains bash-5.2.37 coreutils-9.6 glibc-2.41 linux ncurses-6.5 util-linux-2.40.4 iproute2-6.13.0 elfutils-0.192 openssl-3.4.1 wget-1.25.0 libcap-2.75 zlib-1.3.1 zstd-1.5.7 musl-1.2.5 toybox-0.8.12 -rfd
+$RUNAS rm vyasa.qcow2 builds rootfs disk -rfd
+#$RUNAS rm vyasa.qcow2 builds rootfs disk toolchains -rfd
 
 WS=$(pwd)
+mkdir $WS/builds
 VYASA=$(pwd)/rootfs
 VYASA_TGT=$(uname -m)-vyasa-linux-gnu
 #VYASA_TGT=$(uname -m)-vyasa-linux-musl
@@ -249,7 +262,9 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 # M4
-tar -xf sources/m4-1.4.19.tar.xz
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/m4-1.4.19.tar.xz
 mkdir m4-1.4.19/build -p
 cd m4-1.4.19/build
 
@@ -268,7 +283,10 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 # Ncurses
-tar -xf sources/ncurses-6.5.tar.gz
+# ------------------------------
+# BUG: fix tic
+cd $WS/builds
+tar -xf ../sources/ncurses-6.5.tar.gz
 
 mkdir ncurses-6.5/tuild -p
 cd ncurses-6.5/tuild
@@ -276,7 +294,7 @@ cd ncurses-6.5/tuild
 ../configure AWK=gawk
 make -C include
 make -C progs tic
-cd $WS
+cd $WS/builds
 
 mkdir ncurses-6.5/build -p
 cd ncurses-6.5/build
@@ -306,7 +324,9 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 # Bash
-tar -xf sources/bash-5.2.37.tar.gz
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/bash-5.2.37.tar.gz
 mkdir bash-5.2.37/build -p
 cd bash-5.2.37/build
 
@@ -330,7 +350,9 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 # Coreutils
-tar -xf sources/coreutils-9.6.tar.xz
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/coreutils-9.6.tar.xz
 mkdir coreutils-9.6/build -p
 cd coreutils-9.6/build
 
@@ -352,8 +374,9 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 # Diffutils
-# ----------------------------------
-tar -xf sources/diffutils-3.11.tar.xz
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/diffutils-3.11.tar.xz
 mkdir diffutils-3.11/build -p
 cd diffutils-3.11/build
 
@@ -372,8 +395,9 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 # File
-# ----------------------------------
-tar -xf ./sources/file-5.46.tar.gz
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/file-5.46.tar.gz
 
 mkdir file-5.46/tuild -p
 cd file-5.46/tuild
@@ -383,7 +407,7 @@ cd file-5.46/tuild
              --disable-xzlib      \
              --disable-zlib
 make
-cd $WS
+cd $WS/builds
 
 mkdir file-5.46/build -p
 cd file-5.46/build
@@ -403,8 +427,9 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 # findutils
-# -------------------------------
-tar -xf sources/findutils-4.10.0.tar.xz
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/findutils-4.10.0.tar.xz
 mkdir findutils-4.10.0/build -p
 cd findutils-4.10.0/build
 
@@ -423,8 +448,9 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 # gwak
-# -------------------------------
-tar -xf sources/gawk-5.3.1.tar.xz
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/gawk-5.3.1.tar.xz
 mkdir gawk-5.3.1/build -p
 cd gawk-5.3.1/build
 
@@ -443,8 +469,9 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 # grep
-# -------------------------------
-tar -xf sources/grep-3.11.tar.xz
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/grep-3.11.tar.xz
 mkdir grep-3.11/build -p
 cd grep-3.11/build
 
@@ -463,8 +490,9 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 # gzip
-# -------------------------------
-tar -xf sources/gzip-1.13.tar.xz
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/gzip-1.13.tar.xz
 mkdir gzip-1.13/build -p
 cd gzip-1.13/build
 
@@ -483,8 +511,9 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 # make
-# -------------------------------
-tar -xf sources/make-4.4.1.tar.gz
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/make-4.4.1.tar.gz
 mkdir make-4.4.1/build -p
 cd make-4.4.1/build
 
@@ -503,8 +532,9 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 # patch
-# -------------------------------
-tar -xf sources/patch-2.7.6.tar.xz
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/patch-2.7.6.tar.xz
 mkdir patch-2.7.6/build -p
 cd patch-2.7.6/build
 
@@ -523,8 +553,9 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 # sed
-# -------------------------------
-tar -xf sources/sed-4.9.tar.xz
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/sed-4.9.tar.xz
 mkdir sed-4.9/build -p
 cd sed-4.9/build
 
@@ -543,8 +574,9 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 # tar
-# -------------------------------
-tar -xf sources/tar-1.35.tar.xz
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/tar-1.35.tar.xz
 mkdir tar-1.35/build -p
 cd tar-1.35/build
 
@@ -563,8 +595,9 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 # xz
-# -------------------------------
-tar -xf sources/xz-5.6.4.tar.xz
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/xz-5.6.4.tar.xz
 mkdir xz-5.6.4/build -p
 cd xz-5.6.4/build
 
@@ -583,8 +616,6 @@ duration=$SECONDS
 echo -e "\e[1;33mxz compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
 TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
-
-
 
 #../configure --prefix=$VYASA/tools \
 #             --with-sysroot=$VYASA \
@@ -608,11 +639,13 @@ SECONDS=0
 #    --enable-default-hash-style=gnu
 
 # binutils-2.44
-tar -xf binutils-2.44.tar.xz
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/binutils-2.44.tar.xz
 
 cd binutils-2.44
 sed '6031s/$add_dir//' -i ltmain.sh
-cd $WS
+cd $WS/builds
 
 mkdir binutils-2.44/build -p
 cd binutils-2.44/build
@@ -632,7 +665,7 @@ cd binutils-2.44/build
 make -j16
 $RUNAS $MAKE DESTDIR=$VYASA install
 #CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
-rm -v $VYASA/usr/lib/lib{bfd,ctf,ctf-nobfd,opcodes,sframe}.{a,la}
+rm -vf $VYASA/usr/lib/lib{bfd,ctf,ctf-nobfd,opcodes,sframe}.{a,la}
 cd $WS
 
 duration=$SECONDS
@@ -641,8 +674,223 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 
+# iproute - deps: elfutils, libcap, libz, libzstd
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/iproute2-6.13.0.tar.xz
+#mkdir iproute2-6.13.0.tar.xz/build -p
+cd iproute2-6.13.0
+./configure --libbpf_force off --prefix=/usr
+
+make -j16
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33miproute compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# Static
+#❯ ldd /tmp/nxjs/fish
+#❯ cp result/bin/fish* /tmp/nxjs/
+#❯ nix build -L nixpkgs#pkgsStatic.fish
+#❯ nix build -L nixpkgs#pkgsStatic.toybox
+
+## Util-linux
+## ------------------------------
+#cd $WS/builds
+#tar -xf ../sources/util-linux-2.40.4.tar.xz
+#mkdir util-linux-2.40.4/build -p
+#cd util-linux-2.40.4
+#./autogen.sh
+#cd build
+#
+#../configure --prefix=/usr   \
+#            --host=$VYASA_TGT \
+#            --disable-pylibmount  \
+#            --disable-static      \
+#            --disable-liblastlog2 \
+#            --without-python      
+#
+#
+#make -j16
+#$RUNAS $MAKE DESTDIR=$VYASA install
+#cd $WS
+#
+#duration=$SECONDS
+#echo -e "\e[1;33mutil-linux compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+#TOTALTIME=$((TOTALTIME + duration))
+#SECONDS=0
+
+
+## elfutils
+## ------------------------------
+#cd $WS/builds
+#tar -xf ../sources/elfutils-0.192.tar.bz2
+#mkdir elfutils-0.192/build -p
+#cd elfutils-0.192/
+#autoreconf -i -f
+#cd build/
+#../configure --host $VYASA_TGT --disable-option-checking --enable-maintainer-mode --prefix=/usr
+#
+#make -j16
+#$RUNAS $MAKE DESTDIR=$VYASA install
+#cd $WS
+#
+#duration=$SECONDS
+#echo -e "\e[1;33melfutils compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+#TOTALTIME=$((TOTALTIME + duration))
+#SECONDS=0
+
+# openssl
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/openssl-3.4.1.tar.gz
+mkdir openssl-openssl-3.4.1/build -p
+cd openssl-openssl-3.4.1/build
+../Configure --prefix=/usr
+
+make -j16
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mopenssl compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# wget
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/wget-1.25.0.tar.gz
+mkdir wget-1.25.0/build -p
+cd wget-1.25.0/build
+../configure --host $VYASA_TGT --with-ssl=openssl OPENSSL_CFLAGS=-I$VYASA/usr/include OPENSSL_LIBS="-L$VYASA/usr/lib64 -lssl -lcrypto"
+
+make -j16
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mwget compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# libcap
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/libcap-2.75.tar.gz
+cd libcap-2.75
+make -j16
+$RUNAS $MAKE DESTDIR=$VYASA/lib install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mlibcap compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# zlib
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/zlib-1.3.1.tar.xz
+mkdir zlib-1.3.1/build -p
+cd zlib-1.3.1/build
+../configure --prefix=/usr
+
+make -j16
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mzlib compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# zstd
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/zstd-1.5.7.tar.gz
+cd zstd-1.5.7/
+make -j16
+$RUNAS $MAKE DESTDIR=$VYASA PREFIX=/usr install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mzstd compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+
+# dnsmasq2
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/dnsmasq-2.90.tar.xz
+cd dnsmasq-2.90
+make -j16
+cp src/dnsmasq $VYASA/bin
+$RUNAS $MAKE DESTDIR=$VYASA install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mdnsmasq2 compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+#pkgs.gettext
+#make[2]: Entering directory '/home/js/Works/JS/vyasa/builds/glibc-2.41/po'
+#msgfmt -o /home/js/Works/JS/vyasa/builds/glibc-2.41/build/po/be.mo be.po
+#make[2]: msgfmt: No such file or directory
+
+# Glibc
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/glibc-2.41.tar.xz
+mkdir glibc-2.41/build -p
+cd glibc-2.41/build
+../configure                    \
+    --prefix=/usr               \
+    --host=$VYASA_TGT           \
+    --build=$(../config.guess)  \
+    --libdir=/lib               \
+    --disable-werror            \
+    libc_cv_c_cleanup=yes       \
+    libc_cv_forced_unwind=yes
+
+
+make -j16
+$RUNAS $MAKE DESTDIR=$VYASA install
+#CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mglibc compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+## musl-libc
+#tar -xf musl-1.2.5.tar.gz
+#mkdir musl-1.2.5/build -p
+#cd musl-1.2.5/build
+#../configure --host $VYASA_TGT --disable-werror --libdir=/lib --prefix=/usr
+#
+#make -j16
+#$RUNAS $MAKE DESTDIR=$VYASA install
+##CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
+#cd $WS
+#
+#duration=$SECONDS
+#echo -e "\e[1;33mmusllibc compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+#TOTALTIME=$((TOTALTIME + duration))
+#SECONDS=0
+
+
+
 # Kernel
-tar -xf linux-6.13.5.tar.zst
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/linux-6.13.5.tar.zst
 
 cd linux
 make distclean
@@ -734,181 +982,6 @@ echo -e "\e[1;33mKernel compile took: $((duration / 60)) minutes and $((duration
 TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
-
-# Static
-#❯ ldd /tmp/nxjs/fish
-#❯ cp result/bin/fish* /tmp/nxjs/
-#❯ nix build -L nixpkgs#pkgsStatic.fish
-#❯ nix build -L nixpkgs#pkgsStatic.toybox
-
-# Glibc
-tar -xf glibc-2.41.tar.xz
-mkdir glibc-2.41/build -p
-cd glibc-2.41/build
-../configure --host $HOST --disable-werror libc_cv_forced_unwind=yes libc_cv_c_cleanup=yes --libdir=/lib --prefix=/usr
-
-make -j16
-make DESTDIR=$VYASA install
-#CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
-cd $WS
-
-## musl-libc
-#tar -xf musl-1.2.5.tar.gz
-#mkdir musl-1.2.5/build -p
-#cd musl-1.2.5/build
-#../configure --host $HOST --disable-werror --libdir=/lib --prefix=/usr
-#
-#make -j16
-#$RUNAS $MAKE DESTDIR=$VYASA install
-##CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
-#cd $WS
-#
-#duration=$SECONDS
-#echo -e "\e[1;33mmusllibc compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
-#TOTALTIME=$((TOTALTIME + duration))
-#SECONDS=0
-
-# Util-linux
-# FIX: `NIXOS` line 1: ../tools/all_syscalls: cannot execute: required file not found
-if [ ! -f /bin/bash ]; then
-    echo -e "\e[1;31mBash not found!\n"
-    echo -e "\e[1;30m---------------"
-    echo -e "\e[1;34mSymlinking bash"
-    echo -e "\e[1;30m---------------"
-    $RUNAS ln -s /run/current-system/sw/bin/bash /bin/bash 
-fi
-
-tar -xf util-linux-2.40.4.tar.xz
-mkdir util-linux-2.40.4/build -p
-cd util-linux-2.40.4
-./autogen.sh
-cd build
-../configure --host $HOST --disable-liblastlog2 --prefix=/usr
-
-make -j16
-$RUNAS $MAKE DESTDIR=$VYASA install
-cd $WS
-
-duration=$SECONDS
-echo -e "\e[1;33mutil-linux compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
-TOTALTIME=$((TOTALTIME + duration))
-SECONDS=0
-
-# iproute - deps: elfutils, libcap, libz, libzstd
-tar -xf iproute2-6.13.0.tar.xz
-#mkdir iproute2-6.13.0.tar.xz/build -p
-cd iproute2-6.13.0
-./configure --libbpf_force off --prefix=/usr
-
-make -j16
-$RUNAS $MAKE DESTDIR=$VYASA install
-cd $WS
-
-duration=$SECONDS
-echo -e "\e[1;33miproute compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
-TOTALTIME=$((TOTALTIME + duration))
-SECONDS=0
-
-# elfutils
-tar -xf elfutils-0.192.tar.bz2
-mkdir elfutils-0.192/build -p
-cd elfutils-0.192/
-autoreconf -i -f
-cd build/
-../configure --host $HOST --disable-option-checking --enable-maintainer-mode --prefix=/usr
-
-make -j16
-make DESTDIR=$VYASA install
-cd $WS
-
-duration=$SECONDS
-echo -e "\e[1;33melfutils compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
-TOTALTIME=$((TOTALTIME + duration))
-SECONDS=0
-
-
-# openssl
-tar -xf openssl-3.4.1.tar.gz
-mkdir openssl-openssl-3.4.1/build -p
-cd openssl-openssl-3.4.1/build
-../Configure --prefix=/usr
-
-make -j16
-$RUNAS $MAKE DESTDIR=$VYASA install
-cd $WS
-
-duration=$SECONDS
-echo -e "\e[1;33mopenssl compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
-TOTALTIME=$((TOTALTIME + duration))
-SECONDS=0
-
-# wget
-tar -xf wget-1.25.0.tar.gz
-mkdir wget-1.25.0/build -p
-cd wget-1.25.0/build
-../configure --host $HOST --with-ssl=openssl OPENSSL_CFLAGS=-I$VYASA/usr/include OPENSSL_LIBS="-L$VYASA/usr/lib64 -lssl -lcrypto"
-
-make -j16
-$RUNAS $MAKE DESTDIR=$VYASA install
-cd $WS
-
-duration=$SECONDS
-echo -e "\e[1;33mwget compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
-TOTALTIME=$((TOTALTIME + duration))
-SECONDS=0
-
-# libcap
-tar -xf libcap-2.75.tar.gz
-cd libcap-2.75
-make -j16
-$RUNAS $MAKE DESTDIR=$VYASA/lib install
-cd $WS
-
-duration=$SECONDS
-echo -e "\e[1;33mlibcap compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
-TOTALTIME=$((TOTALTIME + duration))
-SECONDS=0
-
-# libz
-tar -xf zlib-1.3.1.tar.xz
-mkdir zlib-1.3.1/build -p
-cd zlib-1.3.1/build
-../configure --prefix=/usr
-
-make -j16
-$RUNAS $MAKE DESTDIR=$VYASA install
-cd $WS
-
-duration=$SECONDS
-echo -e "\e[1;33mzlib compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
-TOTALTIME=$((TOTALTIME + duration))
-SECONDS=0
-
-# zstd
-tar -xf zstd-1.5.7.tar.gz
-cd zstd-1.5.7/
-make -j16
-$RUNAS $MAKE DESTDIR=$VYASA PREFIX=/usr install
-cd $WS
-
-duration=$SECONDS
-echo -e "\e[1;33mzstd compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
-TOTALTIME=$((TOTALTIME + duration))
-SECONDS=0
-
-
-# dnsmasq2
-tar -xf dnsmasq-2.90.tar.xz
-cd dnsmasq-2.90
-make -j16
-cp src/dnsmasq $VYASA/bin
-$RUNAS $MAKE DESTDIR=$VYASA install
-cd $WS
-
-duration=$SECONDS
-echo -e "\e[1;33mdnsmasq2 compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
-TOTALTIME=$((TOTALTIME + duration))
-SECONDS=0
 
 # LD
 #echo -e "\e[1;32m$($VYASA/lib/libc.so $VYASA/usr/bin/uname -a)\e[0m"

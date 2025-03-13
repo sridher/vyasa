@@ -43,7 +43,7 @@
 
             pkgs.autoconf
             pkgs.automake
-            pkgs.gettext
+            #pkgs.gettext
             pkgs.libtool
 
             pkgs.gnumake

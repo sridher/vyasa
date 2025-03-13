@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+
+set -e -u -o pipefail
+
+# development environment
+# bwrap/chroot develop
+
+RUNAS="doas" # or sudo
+
+#https://www.shellhacks.com/bash-colors/
+#❯ neofetch
+# fg = 30..37
+# bg = 40..47
+# lfg = 1;{30..37}
+# lbg = 1;{40..47}
+
+# MODIFICATIONS: 0 -> Normal, 1 -> Bold, 4 -> Underline, 5 -> Blinking, 7 -> Reverse video char
+# -e    	Enable interpretation of backslash escapes
+# \e[   	Begin the color modifications
+# COLORm	Color Code + ‘m’ at the end
+# \e[0m 	End code in the color modifications
+#
+# echo -e "\e[COLORmSample Text\e[0m"
+# echo -e "\e[COLOR1;COLOR2mSample Text\e[0m"
+
+echo -e "\e[1;34mBuilding Vyasa linux....\e[0m"
+
+# Warmup admin
+$RUNAS echo -e "\e[1;36m$(uname -a)\e[0m"
+
+$RUNAS modprobe nbd max_parts=8
+
+# FIX: `NIXOS` : ../tools/all_syscalls: cannot execute: required file not found
+# Applications expecting absolute path
+if [ ! -f /bin/bash ]; then
+    echo -e "\e[1;31mBash not found!\n"
+    echo -e "\e[1;30m---------------"
+    echo -e "\e[1;34mSymlinking bash"
+    echo -e "\e[1;30m---------------"
+    $RUNAS ln -s /run/current-system/sw/bin/bash /bin/bash 
+    $RUNAS ln -s /etc/profiles/per-user/js/bin/python3 /usr/bin
+fi
+
+
+# Cleanup
+SECONDS=0
+TOTALTIME=0
+
+WS=$(pwd)
+VYASA=$(pwd)/rootfs
+VYASA_TGT=$(uname -m)-vyasa-linux-gnu
+#VYASA_TGT=$(uname -m)-vyasa-linux-musl
+
+#TOOLCHAIN=$WS/toolchains/x86_64-linux-musl-cross/bin/x86_64-linux-musl
+TOOLCHAIN=$WS/toolchains/x86-64--glibc--bleeding-edge-2024.05-1/bin/x86_64-buildroot-linux-gnu
+TOOL="$TOOLCHAIN"-
+CC="$TOOL"gcc
+CXX="$TOOL"g++
+MAKE=$(which make)
+
+#bwrap --bind /mnt/gentoo / --dev /dev --proc /proc --perms 1777 --tmpfs /dev/shm --ro-bind /etc/resolv.conf /etc/resolv.conf /bin/bash --login
+
+exec env -i HOME="$HOME" WS=$(pwd) VYASA=$(pwd)/rootfs VYASA_TGT=$(uname -m)-vyasa-linux-gnu \
+    HOME=/root                  \
+    TERM="$TERM"                \
+    PS1='\e[1;34m(vyasa chroot)\e[0m \u:\w\$ '\
+    PATH=/usr/bin:/usr/sbin     \
+    /run/current-system/sw/bin/bwrap   \
+    --dev-bind $(pwd)/rootfs /   \
+    --dev-bind /dev /dev \
+    --bind /var /var    \
+    --bind /sys /sys    \
+    --bind /run /run    \
+    --proc /proc        \
+    --perms 1777 --tmpfs /dev/shm \
+    --unshare-all       \
+    --share-net         \
+    --hostname vyasa    \
+    --bind $(pwd)/distrom /vyasa/distrom \
+    --bind $(pwd)/vyasa /vyasa/vyasa \
+    --bind $(pwd)/vbuilds /builds \
+    --bind $(pwd)/sources /sources \
+    --bind $(pwd)/toolchains /toolchains \
+    bash --login # returning shell will exit terminal
+
+
+# CHROOT: in chroot
+(vyasa chroot) js:/builds/gcc-14.2.0$ mkdir build && cd build
+(vyasa chroot) js:/builds/gcc-14.2.0/build$ export PATH=$PATH:/toolchains/x86-64--glibc--bleeding-edge-2024.05-1/bin
+(vyasa chroot) js:/builds/gcc-14.2.0/build$ export CC=x86_64-linux-gcc
+(vyasa chroot) js:/builds/gcc-14.2.0/build$ export CXX=x86_64-linux-g++
+
+(vyasa chroot) js:/builds/gmp-6.3.0/build$ ldconfig -p
+
+(vyasa chroot) js:/builds/gmp-6.3.0/build$ ../configure --prefix=/usr
+(vyasa chroot) js:/builds/gmp-6.3.0/build$ make -j16
+(vyasa chroot) js:/builds/gmp-6.3.0/build$ make install
+
+(vyasa chroot) js:/builds$ tar -xf /sources/gcc-14.2.0.tar.xz
+(vyasa chroot) js:/builds$ cd gcc-14.2.0/
+
+#mount -v --rbind /dev $VYASA/dev
+#mount --make-rslave /dev $VYASA/dev
+#mount -vt devpts devpts -o gid=5,mode=0620 $VYASA/dev/pts
+#mount -vt proc proc $VYASA/proc
+#mount -vt sysfs sysfs $VYASA/sys
+#mount --make-rslave $VYASA/sys
+#mount -vt tmpfs tmpfs $VYASA/run
+#
+#if [ -h $LFS/dev/shm ]; then
+#  install -v -d -m 1777 $VYASA$(realpath /dev/shm)
+#else
+#  mount -vt tmpfs -o nosuid,nodev tmpfs $VYASA/dev/shm
+#fi
+#
+#chroot "$VYASA" /usr/bin/env -i   \
+#    HOME=/root                  \
+#    TERM="$TERM"                \
+#    PS1='(lfs chroot) \u:\w\$ ' \
+#    PATH=/usr/bin:/usr/sbin     \
+#    MAKEFLAGS="-j$(nproc)"      \
+#    TESTSUITEFLAGS="-j$(nproc)" \
+#    /bin/bash --login
+
+#exec env -i HOME="$HOME" bwrap --ro-bind /usr /usr \
+#      --ro-bind /etc /etc \
+#      --bind /var /var \
+#      --bind /sys /sys \
+#      --bind /run /run \
+#      --tmpfs /tmp \
+#      --symlink /usr/lib /lib \
+#      --symlink /usr/lib64 /lib64 \
+#      --symlink /usr/lib32 /lib32 \
+#      --symlink /usr/bin /bin \
+#      --symlink /usr/sbin /sbin \
+#      --dev-bind /dev /dev \
+#      --proc /proc \
+#      --bind $HOME_DIR $HOME \
+#      bash
+
+
+## Devices
+#$RUNAS mknod -m 622 $VYASA/dev/console c 5 1
+#$RUNAS mknod -m 666 $VYASA/dev/null c 1 3
+#$RUNAS mknod -m 666 $VYASA/dev/zero c 1 5
+#$RUNAS mknod -m 666 $VYASA/dev/ptmx c 5 2
+#$RUNAS mknod -m 666 $VYASA/dev/tty c 5 0 # <--
+#$RUNAS mknod -m 444 $VYASA/dev/random c 1 8
+#$RUNAS mknod -m 444 $VYASA/dev/urandom c 1 9
+#$RUNAS chown root:tty $VYASA/dev/{console,ptmx,tty}
+
+echo -e "\e[1;36m\nBoot took $(cut -d' ' -f1 /proc/uptime) seconds\e[0m\n\e[1;34m"
+cat <<!
+
+
+@@@  @@@  @@@ @@@   @@@@@@    @@@@@@    @@@@@@  
+@@@  @@@  @@@ @@@  @@@@@@@@  @@@@@@@   @@@@@@@@ 
+@@!  @@@  @@! !@@  @@!  @@@  !@@       @@!  @@@ 
+!@!  @!@  !@! @!!  !@!  @!@  !@!       !@!  @!@ 
+@!@  !@!   !@!@!   @!@!@!@!  !!@@!!    @!@!@!@! 
+!@!  !!!    @!!!   !!!@!!!!   !!@!!!   !!!@!!!! 
+:!:  !!:    !!:    !!:  !!!       !:!  !!:  !!! 
+ ::!!:!     :!:    :!:  !:!      !:!   :!:  !:! 
+  ::::       ::    ::   :::  :::: ::   ::   ::: 
+   :         :      :   : :  :: : :     :   : : 
+
+
+!
+echo -e "\e[0m\e[1;33m\nWelcome to Vysa linux\e[0m\n"
+
+duration=$SECONDS
+echo -e "\e[1;33mPre init took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+
+
+
+duration=$SECONDS
+echo -e "\e[1;33mPost processing took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+exit 0

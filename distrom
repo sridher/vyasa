@@ -28,8 +28,6 @@ echo -e "\e[1;34mBuilding Vyasa linux....\e[0m"
 # Warmup admin
 $RUNAS echo -e "\e[1;36m$(uname -a)\e[0m"
 
-$RUNAS modprobe nbd max_parts=8
-
 # FIX: `NIXOS` : ../tools/all_syscalls: cannot execute: required file not found
 # Applications expecting absolute path
 if [ ! -f /bin/bash ]; then
@@ -814,8 +812,8 @@ cd binutils-2.44/build
     --enable-default-hash-style=gnu
 
 make -j16
-make DESTDIR=$VYASA install
-#steam-run make DESTDIR=$VYASA install # nixos  HACK: for /usr/local/lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
+#make DESTDIR=$VYASA install
+steam-run make DESTDIR=$VYASA install # nixos  HACK: for /usr/local/lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
 #CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
 rm -vf $VYASA/usr/lib/lib{bfd,ctf,ctf-nobfd,opcodes,sframe}.{a,la}
 cd $WS
@@ -1249,6 +1247,9 @@ EOF
 
 # fdisk
 cd $WS
+
+$RUNAS modprobe nbd max_parts=8
+
 qemu-img create -f qcow2 vyasa.qcow2 7G
 
 #lsmod | grep nbd

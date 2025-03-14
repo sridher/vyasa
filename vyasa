@@ -85,6 +85,10 @@ exec env -i HOME="$HOME" WS=$(pwd) VYASA=$(pwd)/rootfs VYASA_TGT=$(uname -m)-vya
 
 
 # CHROOT: in chroot
+export PATH=$PATH:/toolchains/x86-64--glibc--bleeding-edge-2024.05-1/bin
+export CC=x86_64-linux-gcc
+export CXX=x86_64-linux-g++
+
 (vyasa chroot) js:/builds/gcc-14.2.0$ mkdir build && cd build
 (vyasa chroot) js:/builds/gcc-14.2.0/build$ export PATH=$PATH:/toolchains/x86-64--glibc--bleeding-edge-2024.05-1/bin
 (vyasa chroot) js:/builds/gcc-14.2.0/build$ export CC=x86_64-linux-gcc
@@ -96,8 +100,46 @@ exec env -i HOME="$HOME" WS=$(pwd) VYASA=$(pwd)/rootfs VYASA_TGT=$(uname -m)-vya
 (vyasa chroot) js:/builds/gmp-6.3.0/build$ make -j16
 (vyasa chroot) js:/builds/gmp-6.3.0/build$ make install
 
+(vyasa chroot) js:/builds/mpfr-4.2.1/build$ ../configure --prefix=/usr
+(vyasa chroot) js:/builds/mpfr-4.2.1/build$ make -j16
+(vyasa chroot) js:/builds/mpfr-4.2.1/build$ make install
+
+(vyasa chroot) js:/builds/mpc-1.3.1/build$ ../configure --prefix=/usr
+(vyasa chroot) js:/builds/mpc-1.3.1/build$ make -j16
+(vyasa chroot) js:/builds/mpc-1.3.1/build$ make install
+
 (vyasa chroot) js:/builds$ tar -xf /sources/gcc-14.2.0.tar.xz
 (vyasa chroot) js:/builds$ cd gcc-14.2.0/
+❯ ./contrib/download_prerequisites
+cd build
+ ../configure --prefix=/usr --disable-bootstrap --disable-nls --disable-multilib --enable-languages=c,c++
+
+
+
+# Or in new GCC versions, you can ask gcc to download the prerequisites
+cd gcc-x.y.z
+./contrib/download_prerequisites
+cd $HOME/src # Returning the main src folder
+
+mkdir build-gcc
+cd build-gcc
+../gcc-x.y.z/configure --prefix=/usr --disable-nls --disable-multilib --enable-languages=c,c++
+make
+make install
+
+
+../configure --prefix=$PREFIX \
+--target=$TARGET \
+--disable-nls \
+--enable-languages=c,c++ --without-headers \
+--enable-interwork --enable-multilib \
+--with-gmp=/usr --with-mpc=/opt/local --with-mpfr=/opt/local
+
+
+#terminate
+error
+exit 0
+
 
 #mount -v --rbind /dev $VYASA/dev
 #mount --make-rslave /dev $VYASA/dev

@@ -261,26 +261,185 @@ echo -e "\e[1;33mPre init took: $((duration / 60)) minutes and $((duration % 60)
 TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
-# gmp
+###################################################
+# Stage 1 from cross compiler
+
+# binutils-2.44
 # ------------------------------
 cd $WS/builds
-tar -xf ../sources/gmp-6.3.0.tar.xz
-mkdir gmp-6.3.0/build -p
-cd gmp-6.3.0/build
+tar -xf ../sources/binutils-2.44.tar.xz
 
-../configure --prefix=/usr   \
-            --host=$VYASA_TGT \
-            --build=$(build-aux/config.guess)
+mkdir binutils-2.44/sbuild -p
+cd binutils-2.44/sbuild
+../configure                    \
+    --prefix=$VYASA/tools       \
+    --with-sysroot=$VYASA       \
+    --target=$VYASA_TGT         \
+    --disable-nls               \
+    --enable-gprofng=no         \
+    --disable-werror            \
+    --enable-new-dtags          \
+    --enable-default-hash-style=gnu
 
 make -j16
-
-make DESTDIR=$VYASA install
+make install
 cd $WS
 
 duration=$SECONDS
-echo -e "\e[1;33mgmp-6.3.0 compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+echo -e "\e[1;32mStage 1: \e[1;33mbinutils compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
 TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
+
+# gcc
+# ------------------------------
+# ❯ ll vbuilds/gcc-14.2.0/{gettext-0.22.tar.gz,gmp-6.2.1.tar.bz2,isl-0.24.tar.bz2,mpc-1.2.1.tar.gz,mpfr-4.1.0.tar.bz2}
+cd $WS/builds
+tar -xf ../sources/gcc-14.2.0.tar.xz
+
+cd gcc-14.2.0
+
+tar -xf ../../sources/mpfr-4.1.0.tar.bz2
+mv -v mpfr-4.1.0 mpfr
+tar -xf ../../sources/gmp-6.2.1.tar.bz2
+mv -v gmp-6.2.1 gmp
+tar -xf ../../sources/mpc-1.2.1.tar.gz
+mv -v mpc-1.2.1 mpc
+
+sed -e '/m64=/s/lib64/lib/' -i.orig gcc/config/i386/t-linux64
+
+cd $WS/builds
+
+mkdir gcc-14.2.0/sbuild -p
+
+cd gcc-14.2.0/sbuild
+../configure                    \
+    --prefix=$VYASA/tools       \
+    --with-sysroot=$VYASA       \
+    --target=$VYASA_TGT         \
+    --with-glibc-version=2.41   \
+    --with-newlib             \
+    --without-headers         \
+    --enable-default-pie      \
+    --enable-default-ssp      \
+    --disable-nls             \
+    --disable-shared          \
+    --disable-multilib        \
+    --disable-threads         \
+    --disable-libatomic       \
+    --disable-libgomp         \
+    --disable-libquadmath     \
+    --disable-libssp          \
+    --disable-libvtv          \
+    --disable-libstdcxx       \
+    --enable-languages=c,c++
+
+
+make -j16
+make install
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;32mStage 1: \e[1;33mgcc compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# Kernel
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/linux-6.13.5.tar.zst
+
+cd linux
+make mrproper
+
+make headers
+find usr/include -type f ! -name '*.h' -delete
+cp -rv usr/include $VYASA/usr
+
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;32mStage 1: \e[1;33mkernel headers took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+# Glibc
+# ------------------------------
+
+# for standard only
+#ln -sfv ../lib/ld-linux-x86-64.so.2 $VYASA/lib64
+#ln -sfv ../lib/ld-linux-x86-64.so.2 $VYASA/lib64/ld-lsb-x86-64.so.3
+
+cd $WS/builds
+tar -xf ../sources/glibc-2.41.tar.xz
+mkdir glibc-2.41/sbuild -p
+echo "rootsbindir=/usr/sbin" > configparms
+cd glibc-2.41/sbuild
+
+../configure                    \
+    --prefix=/usr               \
+    --host=$VYASA_TGT           \
+    --build=$(../scripts/config.guess) \
+    --enable-kernel=5.4                \
+    --with-headers=$VYASA/usr/include    \
+    --disable-nscd                     \
+    libc_cv_slibdir=/usr/lib
+
+make -j16
+make DESTDIR=$VYASA install
+sed '/RTLDLIST=/s@/usr@@g' -i $VYASA/usr/bin/ldd
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;32mStage Target: \e[1;33mglibc compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+
+# Check
+#echo 'int main(){}' | $VYASA_TGT-gcc -xc -
+echo 'int main(){}' | $VYASA/tools/bin/$VYASA_TGT-gcc -xc -
+#echo 'int main(){}' | $VYASA/tools/bin/$VYASA_TGT-gcc -xc --with-lib-path=$VYASA/tools/lib -
+#echo 'int main(){}' | $VYASA/tools/bin/$VYASA_TGT-gcc -xc --sysroot=$VYASA/tools/lib/gcc/$VYASA_TGT/14.2.0 -
+echo -e "\e[1;36m\n\n\n\n\n$(readelf -l a.out | grep ld-linux)\n\n\n\n\n\e[0m"
+
+rm -v a.out
+
+# target libstdc++
+# ------------------------------
+cd $WS/builds
+mkdir gcc-14.2.0/libstdc++-v3/sbuild -p
+cd gcc-14.2.0/libstdc++-v3/sbuild
+
+../configure                        \
+    --host=$VYASA_TGT               \
+    --build=$(../../config.guess)   \
+    --prefix=/usr                   \
+    --disable-multilib              \
+    --disable-nls                   \
+    --disable-libstdcxx-pch         \
+    --enable-libstdcxx-threads=no   \
+    --with-libstdcxx-zoneinfo=no    \
+    --with-gxx-include-dir=/tools/$VYASA_TGT/include/c++/14.2.0
+
+make -j16
+make DESTDIR=$VYASA install
+rm -vf $VYASA/usr/lib/lib{stdc++{,exp,fs},supc++}.la
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;32mStage Target: \e[1;33mlibstdc++ compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+###################################################
+
+# Setup just built toolchain
+PATH=$VYASA/tools/bin:$PATH
+TOOL="$VYASA_TGT"-
+CC="$TOOL"gcc
+CXX="$TOOL"g++
+
+env | rg "vyasa|VYASA"
 
 # M4
 # ------------------------------
@@ -320,9 +479,9 @@ cd $WS/builds
 mkdir ncurses-6.5/build -p
 cd ncurses-6.5/build
 
-../configure --prefix=/usr                \
+../configure --prefix=/usr               \
             --host=$VYASA_TGT            \
-            --build=$(./config.guess)    \
+            --build=$(../config.guess)   \
             --mandir=/usr/share/man      \
             --with-manpage-format=normal \
             --with-shared                \
@@ -355,7 +514,7 @@ cd bash-5.2.37/build
 #[-Wimplicit-function-declaration]
 ../configure --prefix=/usr   \
             --host=$VYASA_TGT \
-            --build=$(build-aux/config.guess)\
+            --build=$(../support/config.guess)\
             --without-bash-malloc \
             CFLAGS="-Wno-error=implicit-function-declaration"
 
@@ -380,8 +539,7 @@ cd coreutils-9.6/build
 export FORCE_UNSAFE_CONFIGURE=1 # error: you should not run configure as root
 ../configure --prefix=/usr   \
             --host=$VYASA_TGT \
-            --build=$(build-aux/config.guess)\
-            --disable-libcap  \
+            --build=$(../build-aux/config.guess)\
             --without-selinux 
 
 make -j16
@@ -403,7 +561,7 @@ cd diffutils-3.11/build
 
 ../configure --prefix=/usr   \
             --host=$VYASA_TGT \
-            --build=$(build-aux/config.guess)
+            --build=$(../build-aux/config.guess)
 
 make -j16
 
@@ -433,7 +591,7 @@ cd $WS/builds
 mkdir file-5.46/build -p
 cd file-5.46/build
 
-../configure --prefix=/usr --host=$VYASA_TGT --build=$(config.guess)
+../configure --prefix=/usr --host=$VYASA_TGT --build=$(../config.guess)
 
 make FILE_COMPILE=$(pwd)/../tuild/src/file -j16
 
@@ -456,7 +614,7 @@ cd findutils-4.10.0/build
 
 ../configure --prefix=/usr   \
             --host=$VYASA_TGT \
-            --build=$(build-aux/config.guess)
+            --build=$(../build-aux/config.guess)
 
 make -j16
 
@@ -477,7 +635,7 @@ cd gawk-5.3.1/build
 
 ../configure --prefix=/usr   \
             --host=$VYASA_TGT \
-            --build=$(build-aux/config.guess)
+            --build=$(../build-aux/config.guess)
 
 make -j16
 
@@ -498,7 +656,7 @@ cd grep-3.11/build
 
 ../configure --prefix=/usr   \
             --host=$VYASA_TGT \
-            --build=$(build-aux/config.guess)
+            --build=$(../build-aux/config.guess)
 
 make -j16
 
@@ -517,9 +675,7 @@ tar -xf ../sources/gzip-1.13.tar.xz
 mkdir gzip-1.13/build -p
 cd gzip-1.13/build
 
-../configure --prefix=/usr   \
-            --host=$VYASA_TGT \
-            --build=$(build-aux/config.guess)
+../configure --prefix=/usr --host=$VYASA_TGT 
 
 make -j16
 
@@ -538,9 +694,10 @@ tar -xf ../sources/make-4.4.1.tar.gz
 mkdir make-4.4.1/build -p
 cd make-4.4.1/build
 
-../configure --prefix=/usr   \
+../configure --prefix=/usr    \
             --host=$VYASA_TGT \
-            --build=$(build-aux/config.guess)
+            --without-guile   \
+            --build=$(../build-aux/config.guess)
 
 make -j16
 
@@ -561,7 +718,7 @@ cd patch-2.7.6/build
 
 ../configure --prefix=/usr   \
             --host=$VYASA_TGT \
-            --build=$(build-aux/config.guess)
+            --build=$(../build-aux/config.guess)
 
 make -j16
 
@@ -582,7 +739,7 @@ cd sed-4.9/build
 
 ../configure --prefix=/usr   \
             --host=$VYASA_TGT \
-            --build=$(build-aux/config.guess)
+            --build=$(../build-aux/config.guess)
 
 make -j16
 
@@ -603,7 +760,7 @@ cd tar-1.35/build
 
 ../configure --prefix=/usr   \
             --host=$VYASA_TGT \
-            --build=$(build-aux/config.guess)
+            --build=$(../build-aux/config.guess)
 
 make -j16
 
@@ -624,7 +781,7 @@ cd xz-5.6.4/build
 
 ../configure --prefix=/usr   \
             --host=$VYASA_TGT \
-            --build=$(build-aux/config.guess)\
+            --build=$(../build-aux/config.guess)\
             --disable-static                  \
 
 make -j16
@@ -693,6 +850,9 @@ duration=$SECONDS
 echo -e "\e[1;33mbinutils compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
 TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
+
+fail
+exit 0
 
 
 # iproute - deps: elfutils, libcap, libz, libzstd

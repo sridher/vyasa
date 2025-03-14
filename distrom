@@ -433,14 +433,6 @@ SECONDS=0
 
 ###################################################
 
-# Setup just built toolchain
-PATH=$VYASA/tools/bin:$PATH
-TOOL="$VYASA_TGT"-
-CC="$TOOL"gcc
-CXX="$TOOL"g++
-
-env | rg "vyasa|VYASA"
-
 # M4
 # ------------------------------
 cd $WS/builds
@@ -795,27 +787,6 @@ echo -e "\e[1;33mxz compile took: $((duration / 60)) minutes and $((duration % 6
 TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
-#../configure --prefix=$VYASA/tools \
-#             --with-sysroot=$VYASA \
-#             --target=$VYASA_TGT   \
-#             --disable-nls       \
-#             --enable-gprofng=no \
-#             --disable-werror    \
-#             --enable-new-dtags  \
-#             --enable-default-hash-style=gnu
-#
-#../configure                   \
-#    --prefix=/usr              \
-#    --build=$(../config.guess) \
-#    --host=$VYASA_TGT            \
-#    --disable-nls              \
-#    --enable-shared            \
-#    --enable-gprofng=no        \
-#    --disable-werror           \
-#    --enable-64-bit-bfd        \
-#    --enable-new-dtags         \
-#    --enable-default-hash-style=gnu
-
 # binutils-2.44
 # ------------------------------
 cd $WS/builds
@@ -827,7 +798,7 @@ cd $WS/builds
 
 mkdir binutils-2.44/build -p
 cd binutils-2.44/build
-#../configure --host VYASA_TGT --prefix=/usr
+
 ../configure                    \
     --prefix=/usr               \
     --host=$VYASA_TGT           \
@@ -851,8 +822,69 @@ echo -e "\e[1;33mbinutils compile took: $((duration / 60)) minutes and $((durati
 TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
+# gcc
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/gcc-14.2.0.tar.xz
+
+cd gcc-14.2.0
+
+tar -xf ../../sources/mpfr-4.1.0.tar.bz2
+mv -v mpfr-4.1.0 mpfr
+tar -xf ../../sources/gmp-6.2.1.tar.bz2
+mv -v gmp-6.2.1 gmp
+tar -xf ../../sources/mpc-1.2.1.tar.gz
+mv -v mpc-1.2.1 mpc
+
+sed -e '/m64=/s/lib64/lib/' -i.orig gcc/config/i386/t-linux64
+
+sed '/thread_header =/s/@.*@/gthr-posix.h/' -i libgcc/Makefile.in libstdc++-v3/include/Makefile.in
+
+cd $WS/builds
+
+mkdir gcc-14.2.0/build -p
+
+cd gcc-14.2.0/build
+../configure                    \
+    --prefix=/usr               \
+    --host=$VYASA_TGT           \
+    --build=$(../config.guess)  \
+    --target=$VYASA_TGT         \
+    LDFLAGS_FOR_TARGET=-L$PWD/$VYASA_TGT/libgcc    \
+    --with-build-sysroot=$VYASA                    \
+    --enable-default-pie                           \
+    --enable-default-ssp                           \
+    --disable-nls                                  \
+    --disable-multilib                             \
+    --disable-libatomic                            \
+    --disable-libgomp                              \
+    --disable-libquadmath                          \
+    --disable-libsanitizer                         \
+    --disable-libssp                               \
+    --disable-libvtv                               \
+    --enable-languages=c,c++
+
+make -j16
+$RUNAS $MAKE DESTDIR=$VYASA install
+ln -sv gcc $VYASA/usr/bin/cc
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mgcc compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+
 fail
 exit 0
+
+# Setup just built toolchain
+PATH=$VYASA/tools/bin:$PATH
+TOOL="$VYASA_TGT"-
+CC="$TOOL"gcc
+CXX="$TOOL"g++
+
+env | rg "vyasa|VYASA"
 
 
 # iproute - deps: elfutils, libcap, libz, libzstd

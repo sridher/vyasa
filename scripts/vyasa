@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+set -e -u -o pipefail
+
+# development environment
+# bwrap/chroot develop
+
+RUNAS="doas" # or sudo
+
+#https://www.shellhacks.com/bash-colors/
+#❯ neofetch
+# fg = 30..37
+# bg = 40..47
+# lfg = 1;{30..37}
+# lbg = 1;{40..47}
+
+# MODIFICATIONS: 0 -> Normal, 1 -> Bold, 4 -> Underline, 5 -> Blinking, 7 -> Reverse video char
+# -e    	Enable interpretation of backslash escapes
+# \e[   	Begin the color modifications
+# COLORm	Color Code + ‘m’ at the end
+# \e[0m 	End code in the color modifications
+#
+# echo -e "\e[COLORmSample Text\e[0m"
+# echo -e "\e[COLOR1;COLOR2mSample Text\e[0m"
+
+echo -e "\e[1;34mBuilding Vyasa linux....\e[0m"
+
+WS="$(pwd)"
+VYASA="$(pwd)"/rootfs
+VYASA_TGT=$(uname -m)-vyasa-linux-gnu
+#VYASA_TGT=$(uname -m)-vyasa-linux-musl
+
+export WS VYASA VYASA_TGT
+
+# Warmup admin
+$RUNAS echo -e "\e[1;36m$(uname -a)\e[0m"
+$RUNAS chown -R root:root "$VYASA"/{usr,lib,lib64,var,etc,bin,sbin,tools}
+
+# FIX: `NIXOS` : ../tools/all_syscalls: cannot execute: required file not found
+# Applications expecting absolute path
+if [ ! -f /bin/bash ]; then
+    echo -e "\e[1;31mBash not found!\n"
+    echo -e "\e[1;30m---------------"
+    echo -e "\e[1;34mSymlinking bash"
+    echo -e "\e[1;30m---------------"
+    $RUNAS ln -s /run/current-system/sw/bin/bash /bin/bash
+    $RUNAS ln -s /etc/profiles/per-user/js/bin/python3 /usr/bin
+fi
+
+
+# Cleanup
+SECONDS=0
+TOTALTIME=0
+
+bash -e ./scripts/wrap /vyasa/chroot/pre
+
+duration=$SECONDS
+echo -e "\e[1;33mPre init took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+for pack in gettext bison perl python texinfo util-linux; 
+do
+    echo $pack
+    echo -e "\e[1;34mInstalling $pack ....\e[0m"
+
+    bash -e ./scripts/wrap /vyasa/chroot/$pack
+    
+duration=$SECONDS
+echo -e "\e[1;33m$pack took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+done
+
+
+exit 0

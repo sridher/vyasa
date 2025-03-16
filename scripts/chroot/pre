@@ -1,0 +1,27 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+! [ -d /builds ] && echo -e "\e[1;31mRun this from chroot.....\e[0m" && exit 1
+
+echo "WS: ${WS:?}"
+echo "VYASA: ${VYASA:?}"
+echo "VYASA_TGT: ${VYASA_TGT:?}"
+#shift
+
+
+if id "builder" >/dev/null 2>&1; then
+	echo -e "\e[1;34mUser build exists.....\e[0m"
+else
+	# CHROOT: in chroot
+	echo "builder:x:101:101::/home/builder:/bin/bash" >> /etc/passwd
+	echo "builder:x:101:" >> /etc/group
+	install -o builder -d /home/builder
+
+	touch /var/log/{btmp,lastlog,faillog,wtmp}
+	chgrp -v utmp /var/log/lastlog
+	chmod -v 664  /var/log/lastlog
+	chmod -v 600  /var/log/btmp
+
+fi
+

@@ -1,0 +1,16 @@
+# gettext
+# ------------------------------
+cd /builds
+rm -rf gettext-0.22
+tar -xf /sources/gettext-0.22.tar.gz
+mkdir gettext-0.22/build -p
+cd gettext-0.22/build
+
+../configure --disable-shared
+
+make -j16
+
+#make install
+cp -v gettext-tools/src/{msgfmt,msgmerge,xgettext} /usr/bin # install limited programs
+# ------------------------------
+

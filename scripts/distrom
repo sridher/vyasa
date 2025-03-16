@@ -364,8 +364,9 @@ SECONDS=0
 # ------------------------------
 
 # for standard only
-#ln -sfv ../lib/ld-linux-x86-64.so.2 $VYASA/lib64
-#ln -sfv ../lib/ld-linux-x86-64.so.2 $VYASA/lib64/ld-lsb-x86-64.so.3
+mkdir $VYASA/lib64
+ln -sfv ../lib/ld-linux-x86-64.so.2 $VYASA/lib64
+ln -sfv ../lib/ld-linux-x86-64.so.2 $VYASA/lib64/ld-lsb-x86-64.so.3
 
 cd $WS/builds
 tar -xf ../sources/glibc-2.41.tar.xz
@@ -442,7 +443,7 @@ cd m4-1.4.19/build
 
 ../configure --prefix=/usr   \
             --host=$VYASA_TGT \
-            --build=$(build-aux/config.guess)
+            --build=$(../build-aux/config.guess)
 
 make -j16
 
@@ -622,6 +623,7 @@ SECONDS=0
 # ------------------------------
 cd $WS/builds
 tar -xf ../sources/gawk-5.3.1.tar.xz
+#tar --lzip -xf ../sources/gawk-5.3.1.tar.lz
 mkdir gawk-5.3.1/build -p
 cd gawk-5.3.1/build
 
@@ -886,8 +888,8 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
 
-fail
 exit 0
+fail
 
 # Setup just built toolchain
 PATH=$VYASA/tools/bin:$PATH
@@ -1188,6 +1190,21 @@ make CROSS_COMPILE=$TOOL tinyconfig
 ./scripts/config --set-val CONFIG_ETHERNET y
 ./scripts/config --set-val CONFIG_E1000 y
 ./scripts/config --set-val CONFIG_INOTIFY_USER y
+
+# QEMU q35
+./scripts/config --set-val CONFIG_SCSI_TGT y
+./scripts/config --set-val CONFIG_SATA_AHCI y
+./scripts/config --set-val CONFIG_SATA_AHCI_PLATFORM y
+#❯ qemu-system-x86_64 -enable-kvm -m 4G -machine q35 -cpu EPYC vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+#❯ qemu-system-x86_64 -enable-kvm -m 4G -machine q35 -cpu Skylake-Server vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+
+# QEMU virt
+#./scripts/config --set-val CONFIG_PCI y
+#./scripts/config --set-val CONFIG_VIRTIO_PCI y
+#./scripts/config --set-val CONFIG_PCI_HOST_GENERIC y
+# virtio-gpu-pci
+#./scripts/config --set-val CONFIG_DRM y
+#./scripts/config --set-val CONFIG_DRM_VIRTIO_GPU y
 
 #make defconfig
 #make oldconfig

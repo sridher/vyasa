@@ -1,0 +1,32 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+#shift
+echo "$@"
+
+! [ $(id -u) -ne 0 ] && echo -e "\e[1;31mRun this as root.....\e[0m" && exit 1
+
+echo "WS: ${WS:?}"
+echo "VYASA: ${VYASA:?}"
+echo "VYASA_TGT: ${VYASA_TGT:?}"
+
+exec doas env -i HOME="$HOME" WS="/builds" VYASA="/" VYASA_TGT="$VYASA_TGT" \
+	     HOME=/root                  \
+	     TERM="$TERM"                \
+	     PS1='\e[1;34m(vyasa chroot)\e[0m \u:\w\$ '\
+	     PATH=/usr/bin:/usr/sbin   \
+	     /run/current-system/sw/bin/bwrap   \
+	     --dev-bind /dev /dev \
+	     --bind /sys /sys    \
+	     --bind /run /run    \
+	     --proc /proc        \
+	     --perms 1777 --tmpfs /dev/shm \
+	     --hostname vyasa    \
+	     --unshare-uts \
+	     --dev-bind "$VYASA" /   \
+	     --bind "$WS"/scripts /vyasa \
+	     --bind "$WS"/vbuilds /builds \
+	     --bind "$WS"/sources /sources \
+	     "$@"
+#	     /bin/bash --login # returning shell will exit terminal

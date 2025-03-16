@@ -1,0 +1,15 @@
+# python
+# ------------------------------
+cd /builds
+rm -rf Python-3.13.2
+tar -xf /sources/Python-3.13.2.tar.xz
+mkdir Python-3.13.2/build -p
+cd Python-3.13.2/build
+
+../configure --prefix=/usr\
+            --enable-shared \
+            --without-ensurepip
+make -j16
+
+make install
+# ------------------------------

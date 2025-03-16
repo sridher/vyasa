@@ -1,0 +1,14 @@
+# texinfo
+# ------------------------------
+cd /builds
+rm -rf texinfo-7.2
+tar -xf /sources/texinfo-7.2.tar.xz
+mkdir texinfo-7.2/build -p
+cd texinfo-7.2/build
+
+../configure --prefix=/usr
+
+make -j16
+
+make install
+# ------------------------------

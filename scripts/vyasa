@@ -4,6 +4,7 @@ set -e -u -o pipefail
 
 # development environment
 # bwrap/chroot develop
+# nix develop
 
 RUNAS="doas" # or sudo
 
@@ -72,5 +73,217 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 done
 
+# Building Kernel and Diskimage
+#❯ qemu-system-x86_64 -enable-kvm -machine q35 -cpu EPYC -smp cpus=2 -m 2G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+
+# Kernel
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/linux-6.13.5.tar.zst
+
+cd linux
+make distclean
+make tinyconfig
+
+# Kernel config
+
+#64BIT
+#BLOCK
+#BINFMT_ELF
+#BINFMT_SCRIPT
+#PRINTK
+#DEVTMPFS
+#DEVTMPFS_MOUNT
+#PCI
+#TTY
+#SERIAL_8250
+#SERIAL_8250_CONSOLE
+#BLK_DEV_SD
+#ATA
+#ATA_PIIX
+#EXT4_FS
+#PROC_FS
+#SYSFS
+
+./scripts/config --set-val CONFIG_64BIT y
+./scripts/config --set-val CONFIG_BLOCK y
+./scripts/config --set-val CONFIG_BINFMT_ELF y
+./scripts/config --set-val CONFIG_BINFMT_SCRIPT y
+./scripts/config --set-val CONFIG_PRINTK y
+./scripts/config --set-val CONFIG_DEVTMPFS y
+./scripts/config --set-val CONFIG_DEVTMPFS_MOUNT y
+./scripts/config --set-val CONFIG_PCI y
+./scripts/config --set-val CONFIG_TTY y
+./scripts/config --set-val CONFIG_SERIAL_8250 y
+./scripts/config --set-val CONFIG_SERIAL_8250_CONSOLE y
+./scripts/config --set-val CONFIG_BLK_DEV_SD y
+./scripts/config --set-val CONFIG_ATA y
+./scripts/config --set-val CONFIG_ATA_PIIX y
+./scripts/config --set-val CONFIG_EXT4_FS y
+./scripts/config --set-val CONFIG_PROC_FS y
+./scripts/config --set-val CONFIG_SYSFS y
+
+# Other options
+#./scripts/config --set-val CONFIG_TTY_PRINTK y
+./scripts/config --set-val CONFIG_EARLY_PRINTK y
+#./scripts/config --set-val CONFIG_VIRTIO_CONSOLE y
+#./scripts/config --set-val CONFIG_VT_HW_CONSOLE_BINDING y
+
+# Network
+#EXPERT
+#FUTEX
+#COMPAT_32BIT_TIME
+#NET
+#PACKET
+#UNIX
+#INET
+#NETDEVICES
+#ETHERNET
+#E1000
+#INOTIFY_USER
+
+./scripts/config --set-val CONFIG_EXPERT y
+./scripts/config --set-val CONFIG_FUTEX y
+./scripts/config --set-val CONFIG_COMPAT_32BIT_TIME y
+./scripts/config --set-val CONFIG_NET y
+./scripts/config --set-val CONFIG_PACKET y
+./scripts/config --set-val CONFIG_UNIX y
+./scripts/config --set-val CONFIG_INET y
+./scripts/config --set-val CONFIG_NETDEVICES y
+./scripts/config --set-val CONFIG_ETHERNET y
+./scripts/config --set-val CONFIG_E1000 y
+./scripts/config --set-val CONFIG_INOTIFY_USER y
+
+# QEMU q35
+./scripts/config --set-val CONFIG_SCSI_TGT y
+./scripts/config --set-val CONFIG_SATA_AHCI y
+./scripts/config --set-val CONFIG_SATA_AHCI_PLATFORM y
+#❯ qemu-system-x86_64 -enable-kvm -m 4G -machine q35 -cpu EPYC vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+#❯ qemu-system-x86_64 -enable-kvm -m 4G -machine q35 -cpu Skylake-Server vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+
+# QEMU virt
+#./scripts/config --set-val CONFIG_PCI y
+#./scripts/config --set-val CONFIG_VIRTIO_PCI y
+#./scripts/config --set-val CONFIG_PCI_HOST_GENERIC y
+# virtio-gpu-pci
+#./scripts/config --set-val CONFIG_DRM y
+#./scripts/config --set-val CONFIG_DRM_VIRTIO_GPU y
+
+#make defconfig
+#make oldconfig
+make olddefconfig
+
+mv .config vyasa-miniconfig 
+make allnoconfig KCONFIG_ALLCONFIG=vyasa-miniconfig
+cp .config vyasa-config 
+
+make -j16
+cp arch/x86/boot/bzImage $VYASA/boot/vyasa
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;33mKernel compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+
+# LD
+#echo -e "\e[1;32m$($VYASA/lib/libc.so $VYASA/usr/bin/uname -a)\e[0m"
+#ldconfig /usr/local/lib64/
+#openssl version -a
+#echo "/lib:/usr/local/lib:/usr/lib" > /etc/ld-musl-x86_64.path
+#$VYASA/bin/ld --help # check
+$VYASA/bin/ld.so --help # check
+$RUNAS tee -a $VYASA/etc/nsswitch.conf > /dev/null <<EOF
+# Begin /etc/nsswitch.conf
+passwd: files
+group: files
+shadow: files
+hosts: files dns
+networks: files
+protocols: files
+services: files
+ethers: files
+rpc: files
+# End /etc/nsswitch.conf
+EOF
+
+$RUNAS tee -a $VYASA/etc/ld.so.config > /dev/null <<EOF
+/lib
+/lib64
+/usr/lib
+/usr/lib64
+/usr/local/lib
+/usr/local/lib64
+/opt/lib
+EOF
+
+#❯ ldconfig # target machine
+# ldconfig -p # target machine
+# ldconfig -n /usr/lib64/libssl.so.3
+#❯ ldconfig -v -r -f etc/ld.so.config -C etc/ld.so.cache ./
+#❯ ldconfig -v -r -f /etc/ld.so.config -C /etc/ld.so.cache ./
+#/tmp # ldd /usr/bin/openssl
+
+# fdisk
+cd $WS
+
+$RUNAS modprobe nbd max_parts=8
+
+qemu-img create -f qcow2 vyasa.qcow2 7G
+
+#lsmod | grep nbd
+#modprobe nbd max_parts=8
+lsmod | grep nbd
+
+#echo -e "\e[1;33mAdmin authentication.......\e[0m"
+$RUNAS qemu-nbd --connect=/dev/nbd0 vyasa.qcow2
+sleep 5
+
+$RUNAS fdisk /dev/nbd0 <<EOF
+n
+p
+1
+
+
+a
+w
+EOF
+$RUNAS fdisk -l /dev/nbd0
+lsblk -a | grep nbd0p1
+#mknod /dev/nbd0p1 b 43 1
+$RUNAS mkfs.ext4 /dev/nbd0p1
+
+mkdir $WS/disk
+$RUNAS mount /dev/nbd0p1 $WS/disk
+
+$RUNAS cp -R $VYASA/* $WS/disk
+
+#grub
+$RUNAS grub-install --target=i386-pc --root-directory=$WS/disk --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/nbd0
+#grub-install --target=i386-pc --root-directory=$WS/disk --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/nbd0 --force
+
+#mkdir $WS/disk/boot/grub -p
+$RUNAS tee -a $WS/disk/boot/grub/grub.cfg > /dev/null <<EOF
+menuentry 'Vyasa' {
+    set root='(hd0,1)'
+    linux /boot/vyasa root=/dev/sda1 rw console=tty0 console=ttyS0
+}
+EOF
+
+sync
+sync
+sync
+$RUNAS umount  $WS/disk
+$RUNAS qemu-nbd --disconnect /dev/nbd0
+sync
+sync
+sync
+
+
+duration=$SECONDS
+echo -e "\e[1;33mPost processing took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
 
 exit 0

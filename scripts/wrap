@@ -30,3 +30,4 @@ exec doas env -i HOME="$HOME" WS="/builds" VYASA="/" VYASA_TGT="$VYASA_TGT" \
 	     --bind "$WS"/sources /sources \
 	     "$@"
 #	     /bin/bash --login # returning shell will exit terminal
+#❯ WS="$(pwd)" VYASA="$(pwd)"/rootfs VYASA_TGT=$(uname -m)-vyasa-linux-gnu ./scripts/wrap bash

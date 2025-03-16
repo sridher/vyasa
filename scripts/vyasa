@@ -35,7 +35,7 @@ export WS VYASA VYASA_TGT
 
 # Warmup admin
 $RUNAS echo -e "\e[1;36m$(uname -a)\e[0m"
-$RUNAS chown -R root:root "$VYASA"/{usr,lib,lib64,var,etc,bin,sbin,tools}
+$RUNAS chown -R root:root "$VYASA"/{usr,lib,lib64,var,etc,bin,sbin}
 
 # FIX: `NIXOS` : ../tools/all_syscalls: cannot execute: required file not found
 # Applications expecting absolute path
@@ -74,7 +74,22 @@ SECONDS=0
 done
 
 # Building Kernel and Diskimage
+#❯ qemu-system-x86_64 -m 2G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+#❯ qemu-system-x86_64 -enable-kvm -cpu EPYC -smp cpus=2 -m 2G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
 #❯ qemu-system-x86_64 -enable-kvm -machine q35 -cpu EPYC -smp cpus=2 -m 2G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+
+# Cleanup
+bash -e ./scripts/wrap /vyasa/chroot/cleanup
+
+#cd $VYASA
+# create, --lzip, J(xz), --zstd, permissions, file
+#❯ doas tar -cJpf vyasa-temp-tools.tar.xz .
+#❯ doas tar --lzip -cpf vyasa-temp-tools.tar.lz .
+#❯ doas tar --sort=name --mtime="@0" --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime,delete=btime,delete=mtime -cJpf ../vyasa-temp-tools.txz .
+#❯ doas tar --sort=name --mtime="@0" --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime,delete=btime,delete=mtime -cJpf ../vyasa-temp-tools.tar.xz .
+#❯ doas tar --sort=name --mtime="@0" --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime,delete=btime,delete=mtime  -cJpf build.tar.xz builddir
+#cd $WS
+
 
 # Kernel
 # ------------------------------
@@ -254,7 +269,7 @@ lsblk -a | grep nbd0p1
 #mknod /dev/nbd0p1 b 43 1
 $RUNAS mkfs.ext4 /dev/nbd0p1
 
-mkdir $WS/disk
+mkdir $WS/disk -p
 $RUNAS mount /dev/nbd0p1 $WS/disk
 
 $RUNAS cp -R $VYASA/* $WS/disk

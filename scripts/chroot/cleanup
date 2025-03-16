@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+! [ -d /builds ] && echo -e "\e[1;31mRun this from chroot.....\e[0m" && exit 1
+
+echo "WS: ${WS:?}"
+echo "VYASA: ${VYASA:?}"
+echo "VYASA_TGT: ${VYASA_TGT:?}"
+#shift
+
+
+rm -rf /usr/share/{info,man,doc}/*
+find /usr/{lib,libexec} -name \*.la -delete
+
+rm -rf /tools

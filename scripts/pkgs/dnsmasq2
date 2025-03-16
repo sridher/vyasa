@@ -1,0 +1,10 @@
+# dnsmasq2
+# ------------------------------
+cd /builds
+rm -rf dnsmasq-2.90
+tar -xf /sources/dnsmasq-2.90.tar.xz
+cd dnsmasq-2.90
+make -j16
+cp src/dnsmasq $VYASA/bin
+make install
+# ------------------------------

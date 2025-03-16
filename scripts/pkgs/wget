@@ -1,0 +1,12 @@
+# wget
+# ------------------------------
+cd /builds
+rm -rf wget-1.25.0
+tar -xf /sources/wget-1.25.0.tar.gz
+mkdir wget-1.25.0/build -p
+cd wget-1.25.0/build
+../configure --host $VYASA_TGT --with-ssl=openssl OPENSSL_CFLAGS=-I$VYASA/usr/include OPENSSL_LIBS="-L$VYASA/usr/lib -lssl -lcrypto"
+
+make -j16
+make install
+# ------------------------------

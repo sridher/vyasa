@@ -1,0 +1,10 @@
+# libcap
+# ------------------------------
+cd /builds
+rm -rf libcap-2.75
+tar -xf /sources/libcap-2.75.tar.gz
+cd libcap-2.75
+
+make -j16
+make install
+# ------------------------------

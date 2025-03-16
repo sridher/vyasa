@@ -1,0 +1,12 @@
+# musl-libc
+# ------------------------------
+tar -xf musl-1.2.5.tar.gz
+rm -rf musl-1.2.5
+mkdir musl-1.2.5/build -p
+cd musl-1.2.5/build
+
+../configure --host $VYASA_TGT --disable-werror --libdir=/lib --prefix=/usr
+
+make -j16
+make install
+# ------------------------------

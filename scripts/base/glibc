@@ -1,0 +1,21 @@
+# Glibc
+# ------------------------------
+cd /builds
+rm -rf glibc-2.41
+tar -xf /sources/glibc-2.41.tar.xz
+mkdir glibc-2.41/sbuild -p
+echo "rootsbindir=/usr/sbin" > configparms
+cd glibc-2.41/sbuild
+
+../configure                    \
+    --prefix=/usr               \
+    --host=$VYASA_TGT           \
+    --build=$(../scripts/config.guess) \
+    --enable-kernel=5.4                \
+    --with-headers=$VYASA/usr/include    \
+    --disable-nscd                     \
+    libc_cv_slibdir=/usr/lib
+
+make -j16
+make install
+# ------------------------------

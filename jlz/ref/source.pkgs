@@ -1,0 +1,100 @@
+lz, xz, zst/zstd, bz2, gz
+-------------------------
+::cc-glibc::cross compiler from bootlin
+https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64/tarballs/x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
+https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64/tarballs/x86-64--glibc--bleeding-edge-2024.05-1.sha256
+::cc-musl::cross compiler from rich felker for musl
+https://landley.net/bin/toolchains/25-03-2024/x86_64-linux-musl-cross.tar.xz
+!!ddd427465c79d22581e7982f3affa1e06ee238c9ecd44657b2dfec67ec2ada0e  x86_64-linux-musl-cross.tar.xz
+::binutils::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/binutils/binutils-2.44.tar.xz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/binutils/binutils-2.44.tar.xz.sig
+::mpfr::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/mpfr/mpfr-4.1.0.tar.xz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/mpfr/mpfr-4.1.0.tar.xz.sig
+::gmp::
+https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz
+#GnuPG
+Key ID: 0x28C67298
+Key type: 2560 bit RSA
+Fingerprint: 343C 2FF0 FBEE 5EC2 EDBE F399 F359 9FF8 28C6 7298 
+::mpc::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/mpc/mpc-1.2.1.tar.gz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/mpc/mpc-1.2.1.tar.gz.sig
+::gcc:: - Gnu compiler collection ./contrib/download_prerequisites
+https://ftp.mpi-inf.mpg.de/mirrors/gnu/mirror/gcc.gnu.org/pub/gcc/releases/gcc-14.2.0/gcc-14.2.0.tar.xz
+https://ftp.mpi-inf.mpg.de/mirrors/gnu/mirror/gcc.gnu.org/pub/gcc/releases/gcc-14.2.0/gcc-14.2.0.tar.xz.sig
+::glibc::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/glibc/glibc-2.14.1.tar.xz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/glibc/glibc-2.14.1.tar.xz.sig
+::m4::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/m4/m4-1.4.19.tar.xz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/m4/m4-1.4.19.tar.xz.sig
+::ncurces::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/ncurses/ncurses-6.5.tar.gz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/ncurses/ncurses-6.5.tar.gz.sig
+::bash::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/bash/bash-5.2.37.tar.gz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/bash/bash-5.2.37.tar.gz.sig
+::coreutils::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/coreutils/coreutils-9.6.tar.xz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/coreutils/coreutils-9.6.tar.xz.sig
+::diffutils::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/diffutils/diffutils-3.11.tar.xz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/diffutils/diffutils-3.11.tar.xz.sig
+::file::
+ftp://ftp.astron.com/pub/file/file-5.46.tar.gz
+ftp://ftp.astron.com/pub/file/file-5.46.tar.gz.asc
+::findutils::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/findutils/findutils-4.10.0.tar.xz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/findutils/findutils-4.10.0.tar.xz.sig
+::gawk::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/gawk/gawk-5.3.1.tar.lz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/gawk/gawk-5.3.1.tar.lz.sig
+https://mirrors.tuna.tsinghua.edu.cn/gnu/gawk/gawk-5.3.1.tar.xz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/gawk/gawk-5.3.1.tar.xz.sig
+::grep::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/grep/grep-3.11.tar.xz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/grep/grep-3.11.tar.xz.sig
+::gzip::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/gzip/gzip-1.13.tar.xz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/gzip/gzip-1.13.tar.xz.sig
+::make::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/make/make-4.4.1.tar.lz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/make/make-4.4.1.tar.lz.sig
+https://mirrors.tuna.tsinghua.edu.cn/gnu/make/make-4.4.1.tar.gz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/make/make-4.4.1.tar.gz.sig
+::patch::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/patch/patch-2.7.6.tar.xz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/patch/patch-2.7.6.tar.xz.sig
+::sed::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/sed/sed-4.9.tar.xz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/sed/sed-4.9.tar.xz.sig
+::tar::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/tar/tar-1.35.tar.xz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/tar/tar-1.35.tar.xz.sig
+::xz::
+https://github.com/tukaani-project/xz/releases/download/v5.6.4/xz-5.6.4.tar.xz
+https://github.com/tukaani-project/xz/releases/download/v5.6.4/xz-5.6.4.tar.xz.sig
+::gettext::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/gettext/gettext-0.22.tar.lz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/gettext/gettext-0.22.tar.lz.sig
+https://mirrors.tuna.tsinghua.edu.cn/gnu/gettext/gettext-0.22.tar.xz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/gettext/gettext-0.22.tar.xz.sig
+::perl::
+https://www.cpan.org/src/5.0/perl-5.40.1.tar.gz
+!!
+::python::
+#MD5 4c2d9202ab4db02c9d0999b14655dfe5
+https://www.python.org/ftp/python/3.13.2/Python-3.13.2.tar.xz
+https://www.python.org/ftp/python/3.13.2/Python-3.13.2.tar.xz.asc
+https://www.python.org/ftp/python/3.13.2/Python-3.13.2.tar.xz.sigstore
+::texinfo::
+https://mirrors.tuna.tsinghua.edu.cn/gnu/texinfo/texinfo-7.2.tar.xz
+https://mirrors.tuna.tsinghua.edu.cn/gnu/texinfo/texinfo-7.2.tar.xz.sig
+::util-linux::
+https://www.kernel.org/pub/linux/utils/util-linux/v2.40/util-linux-2.40.4.tar.xz
+https://www.kernel.org/pub/linux/utils/util-linux/v2.40/util-linux-2.40.4.tar.sign
+
+
+

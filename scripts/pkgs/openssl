@@ -1,0 +1,13 @@
+# openssl
+# ------------------------------
+cd /builds
+rm -rf openssl-openssl-3.4.1
+tar -xf /sources/openssl-3.4.1.tar.gz
+mkdir openssl-openssl-3.4.1/build -p
+cd openssl-openssl-3.4.1/build
+
+../Configure --prefix=/usr --libdir=lib
+
+make -j16
+make install
+# ------------------------------

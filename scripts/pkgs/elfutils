@@ -1,0 +1,16 @@
+# elfutils
+# ------------------------------
+cd /builds
+rm -rf elfutils-0.192/
+tar -xf /sources/elfutils-0.192.tar.bz2
+mkdir elfutils-0.192/build -p
+
+cd elfutils-0.192/
+autoreconf -i -f
+
+cd build/
+../configure --host $VYASA_TGT --disable-option-checking --enable-maintainer-mode --prefix=/usr
+
+make -j16
+make install
+# ------------------------------

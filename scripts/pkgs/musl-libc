@@ -1,3 +1,7 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
 # musl-libc
 # ------------------------------
 tar -xf musl-1.2.5.tar.gz

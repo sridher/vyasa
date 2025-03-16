@@ -87,7 +87,7 @@ SYSROOT=$($CC --print-sysroot)
 #docker rm -f dummy
 
 # Rootfs dirs
-mkdir -p "$VYASA"/{dev,etc/rc,proc,root,sys,usr/{bin,sbin,lib}}
+mkdir -p "$VYASA"/{dev,etc/rc,proc,root,sys,run/lock,usr/{bin,sbin,lib}}
 ln -s usr/{bin,sbin,lib} "$VYASA"
 #chmod a+rwxt "$VYASA"/tmp 
 
@@ -113,17 +113,7 @@ install -dv -m 1777 "$VYASA"/tmp "$VYASA"/var/tmp
 
 
 # DEBUG:
-cp /tmp/nxjs/{ash,bash,dash,fish,libtree,mount,neovim,nu,ping,rldd} $VYASA/bin/
-
-## Devices
-#$RUNAS mknod -m 622 $VYASA/dev/console c 5 1
-#$RUNAS mknod -m 666 $VYASA/dev/null c 1 3
-#$RUNAS mknod -m 666 $VYASA/dev/zero c 1 5
-#$RUNAS mknod -m 666 $VYASA/dev/ptmx c 5 2
-#$RUNAS mknod -m 666 $VYASA/dev/tty c 5 0 # <--
-#$RUNAS mknod -m 444 $VYASA/dev/random c 1 8
-#$RUNAS mknod -m 444 $VYASA/dev/urandom c 1 9
-#$RUNAS chown root:tty $VYASA/dev/{console,ptmx,tty}
+cp /tmp/nxjs/{ash,bash,dash,fish,libtree,mount,neovim,nu,ping,rldd,zellij} $VYASA/bin/
 
 # init
 tee -a "$VYASA"/sbin/init > /dev/null << 'EOF' &&
@@ -138,10 +128,19 @@ mountpoint -q dev/pts || { mkdir -p dev/pts && mount -t devpts dev/pts dev/pts;}
 mkdir -p dev/shm
 chmod +t /dev/shm
 
-exec 0</dev/console
-exec 1>/dev/console
-exec 2>/dev/console
+#exec 0</dev/console
+#exec 1>/dev/console
+#exec 2>/dev/console
 
+## Devices
+#mknod -m 622 /dev/console c 5 1
+#mknod -m 666 /dev/null c 1 3
+#mknod -m 666 /dev/zero c 1 5
+#mknod -m 666 /dev/ptmx c 5 2
+#mknod -m 666 /dev/tty c 5 0 # <--
+#mknod -m 444 /dev/random c 1 8
+#mknod -m 444 /dev/urandom c 1 9
+#
 #chown root:tty /dev/{console,ptmx,tty}
 #chmod ug+rw /dev/{console,ptmx,tty}
 #for tty in /dev/tty*; do

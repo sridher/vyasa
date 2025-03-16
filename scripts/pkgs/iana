@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# iana
+# ------------------------------
+cd /builds
+rm -rf iana-etc-20250304
+tar -xf /sources/iana-etc-20250304.tar.gz
+
+cd iana-etc-20250304
+
+cp services protocols /etc
+# ------------------------------
+

@@ -75,11 +75,25 @@ done
 
 # Building Kernel and Diskimage
 #❯ qemu-system-x86_64 -enable-kvm -cpu host -m 2G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
-#❯ qemu-system-x86_64 -enable-kvm -machine q35 -cpu host -smp cpus=2 -m 2G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
-#❯ qemu-system-x86_64 -enable-kvm -machine q35 -cpu EPYC -smp cpus=2 -m 2G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+#❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu host -smp cpus=2 -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+#❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu EPYC -smp cpus=2 -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
 
 # Cleanup
 bash -e ./scripts/wrap /vyasa/chroot/cleanup
+
+for pack in man-pages iana glibc; 
+do
+    echo $pack
+    echo -e "\e[1;34mInstalling $pack ....\e[0m"
+
+    bash -e ./scripts/wrap /vyasa/pkgs/$pack
+    
+duration=$SECONDS
+echo -e "\e[1;33m$pack took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+done
+
 
 #cd $VYASA
 # create, --lzip, J(xz), --zstd, permissions, file
@@ -229,6 +243,7 @@ rpc: files
 # End /etc/nsswitch.conf
 EOF
 
+$RUNAS mkdir -pv $VYASA/etc/ld.so.conf.d
 $RUNAS tee -a $VYASA/etc/ld.so.config > /dev/null <<EOF
 /lib
 /lib64
@@ -237,6 +252,7 @@ $RUNAS tee -a $VYASA/etc/ld.so.config > /dev/null <<EOF
 /usr/local/lib
 /usr/local/lib64
 /opt/lib
+include /etc/ld.so.conf.d/*.conf
 EOF
 
 #❯ ldconfig # target machine

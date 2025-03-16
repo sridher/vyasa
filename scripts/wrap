@@ -17,17 +17,17 @@ exec doas env -i HOME="$HOME" WS="/builds" VYASA="/" VYASA_TGT="$VYASA_TGT" \
 	     PS1='\e[1;34m(vyasa chroot)\e[0m \u:\w\$ '\
 	     PATH=/usr/bin:/usr/sbin   \
 	     /run/current-system/sw/bin/bwrap   \
-	     --dev-bind /dev /dev \
+	     --dev-bind "$VYASA" /   \
+	     --dev /dev \
 	     --bind /sys /sys    \
 	     --bind /run /run    \
 	     --proc /proc        \
 	     --perms 1777 --tmpfs /dev/shm \
 	     --hostname vyasa    \
 	     --unshare-uts \
-	     --dev-bind "$VYASA" /   \
 	     --bind "$WS"/scripts /vyasa \
 	     --bind "$WS"/vbuilds /builds \
 	     --bind "$WS"/sources /sources \
 	     "$@"
-#	     /bin/bash --login # returning shell will exit terminal
+#	     /bin/bash --login +h -c "$@" # returning shell will exit terminal
 #❯ WS="$(pwd)" VYASA="$(pwd)"/rootfs VYASA_TGT=$(uname -m)-vyasa-linux-gnu ./scripts/wrap bash

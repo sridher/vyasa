@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# man-pages
+# ------------------------------
+cd /builds
+rm -rf man-pages-6.13/
+tar -xf /sources/man-pages-6.13.tar.gz
+cd man-pages-6.13/
+
+rm -v man3/crypt*
+
+make -R GIT=false prefix=/usr install
+
+# ------------------------------
+

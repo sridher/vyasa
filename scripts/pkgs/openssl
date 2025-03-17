@@ -10,8 +10,14 @@ tar -xf /sources/openssl-3.4.1.tar.gz
 mkdir openssl-openssl-3.4.1/build -p
 cd openssl-openssl-3.4.1/build
 
-../Configure --prefix=/usr --libdir=lib
+../config --prefix=/usr         \
+         --openssldir=/etc/ssl \
+         --libdir=lib          \
+         shared                \
+         zlib-dynamic
 
 make -j16
-make install
+sed -i '/INSTALL_LIBS/s/libcrypto.a libssl.a//' Makefile
+
+make MANSUFFIX=ssl install
 # ------------------------------

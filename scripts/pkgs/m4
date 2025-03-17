@@ -2,13 +2,16 @@
 
 set -e -u -o pipefail
 
-# dnsmasq2
+# m4
 # ------------------------------
 cd /builds
-rm -rf dnsmasq-2.90
-tar -xf /sources/dnsmasq-2.90.tar.xz
-cd dnsmasq-2.90
+rm -rf m4-1.4.19
+tar -xf /sources/m4-1.4.19.tar.xz
+mkdir m4-1.4.19/build -p
+cd m4-1.4.19/build
+
+../configure --prefix=/usr
+
 make -j16
-cp src/dnsmasq /bin
 make install
 # ------------------------------

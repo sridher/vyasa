@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# lz4
+# ------------------------------
+cd /builds
+rm -rf lz4-1.10.0
+tar -xf /sources/lz4-1.10.0.tar.gz
+mkdir lz4-1.10.0/build -p
+cd lz4-1.10.0
+
+make BUILD_STATIC=no PREFIX=/usr -j16
+
+#make -j1 check
+
+make BUILD_STATIC=no PREFIX=/usr install
+
+# ------------------------------

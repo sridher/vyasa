@@ -105,10 +105,8 @@ include /etc/ld.so.conf.d/*.conf
 EOF
 
 
-tzselect
-
-ln -sfv /usr/share/zoneinfo/<xxx> /etc/localtime
-
+TIMEZONE=$(tzselect)
+ln -sfv /usr/share/zoneinfo/"$TIMEZONE" /etc/localtime
 
 # ------------------------------
 

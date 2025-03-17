@@ -63,7 +63,7 @@ SECONDS=0
 for pack in gettext bison perl python texinfo util-linux; 
 do
     echo $pack
-    echo -e "\e[1;34mInstalling $pack ....\e[0m"
+    echo -e "\e[1;34m\nInstalling $pack ....\n\e[0m"
 
     bash -e ./scripts/wrap /vyasa/chroot/$pack
     
@@ -81,10 +81,10 @@ done
 # Cleanup
 bash -e ./scripts/wrap /vyasa/chroot/cleanup
 
-for pack in man-pages iana glibc; 
+for pack in man-pages iana glibc zlib bzip xz lz4 zstd file readline m4 bc binutils openssl wget libcap flex iproute dnsmasq2; 
 do
     echo $pack
-    echo -e "\e[1;34mInstalling $pack ....\e[0m"
+    echo -e "\e[1;34m\nInstalling $pack ....\n\e[0m"
 
     bash -e ./scripts/wrap /vyasa/pkgs/$pack
     
@@ -193,8 +193,8 @@ make tinyconfig
 ./scripts/config --set-val CONFIG_SCSI_TGT y
 ./scripts/config --set-val CONFIG_SATA_AHCI y
 ./scripts/config --set-val CONFIG_SATA_AHCI_PLATFORM y
-#❯ qemu-system-x86_64 -enable-kvm -m 4G -machine q35 -cpu EPYC vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
-#❯ qemu-system-x86_64 -enable-kvm -m 4G -machine q35 -cpu Skylake-Server vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+#❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu EPYC -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+#❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu Skylake-Server -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
 
 # QEMU virt
 #./scripts/config --set-val CONFIG_PCI y

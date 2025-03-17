@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# flex
+# ------------------------------
+cd /builds
+rm -rf flex-2.6.4
+tar -xf /sources/flex-2.6.4.tar.gz
+mkdir flex-2.6.4/build -p
+cd flex-2.6.4/build
+
+../configure --prefix=/usr \
+            --docdir=/usr/share/doc/flex-2.6.4 \
+            --disable-static
+
+make -j16
+make install
+# ------------------------------

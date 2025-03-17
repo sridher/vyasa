@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# xz
+# ------------------------------
+cd /builds
+rm -rf xz-5.6.4
+tar -xf /sources/xz-5.6.4.tar.xz
+mkdir xz-5.6.4/build -p
+cd xz-5.6.4/build
+
+../configure --prefix=/usr    \
+            --disable-static \
+            --docdir=/usr/share/doc/xz-5.6.4
+
+make -j16
+make install
+# ------------------------------

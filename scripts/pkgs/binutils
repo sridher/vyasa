@@ -1,0 +1,26 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# binutils
+# ------------------------------
+cd /builds
+rm -rf binutils-2.44
+tar -xf /sources/binutils-2.44.tar.xz
+mkdir binutils-2.44/build -p
+cd binutils-2.44/build
+
+../configure --prefix=/usr       \
+             --sysconfdir=/etc   \
+             --enable-ld=default \
+             --enable-plugins    \
+             --enable-shared     \
+             --disable-werror    \
+             --enable-64-bit-bfd \
+             --enable-new-dtags  \
+             --with-system-zlib  \
+             --enable-default-hash-style=gnu
+
+make tooldir=/usr -j16
+make tooldir=/usr install
+# ------------------------------

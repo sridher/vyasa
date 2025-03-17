@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# bc
+# ------------------------------
+cd /builds
+rm -rf bc-7.0.3
+tar -xf /sources/bc-7.0.3.tar.xz
+mkdir bc-7.0.3/build -p
+cd bc-7.0.3/build
+
+CC=gcc ../configure --prefix=/usr -G -O3 -r
+
+make -j16
+make install
+# ------------------------------

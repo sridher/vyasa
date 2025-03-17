@@ -267,6 +267,7 @@ cd $WS
 
 $RUNAS modprobe nbd max_parts=8
 
+$RUNAS rm vyasa.qcow2
 qemu-img create -f qcow2 vyasa.qcow2 7G
 
 #lsmod | grep nbd
@@ -317,6 +318,8 @@ sync
 sync
 sync
 
+
+$RUNAS rm builds/* vbuilds/* -rfd
 
 duration=$SECONDS
 echo -e "\e[1;33mPost processing took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"

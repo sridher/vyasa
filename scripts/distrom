@@ -113,7 +113,7 @@ install -dv -m 1777 "$VYASA"/tmp "$VYASA"/var/tmp
 
 
 # DEBUG:
-cp /tmp/nxjs/{ash,bash,dash,fish,libtree,mount,neovim,nu,ping,rldd,zellij} $VYASA/bin/
+cp /tmp/nxjs/{ash,dash,rldd} $VYASA/bin/
 
 # init
 tee -a "$VYASA"/sbin/init > /dev/null << 'EOF' &&

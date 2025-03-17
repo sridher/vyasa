@@ -78,7 +78,7 @@ done
 #❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu host -smp cpus=2 -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
 #❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu EPYC -smp cpus=2 -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
 
-for pack in man-pages iana glibc zlib bzip xz lz4 zstd file readline m4 bc binutils openssl wget libcap flex iproute dnsmasq2; 
+for pack in man-pages iana glibc zlib bzip xz lz4 zstd file readline m4 bc binutils ncurses nano openssl wget libcap flex iproute dnsmasq2; 
 do
     echo $pack
     echo -e "\e[1;34m\nInstalling $pack ....\n\e[0m"

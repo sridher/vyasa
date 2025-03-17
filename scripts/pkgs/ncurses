@@ -5,6 +5,9 @@ set -e -u -o pipefail
 # Ncurses
 # ------------------------------
 cd /builds
+
+rm -rf /nix
+
 rm -rf ncurses-6.5
 tar -xf /sources/ncurses-6.5.tar.gz
 
@@ -23,5 +26,5 @@ cd ncurses-6.5/build
 make -j16
 
 make install
-ln -sv libncursesw.so /usr/lib/libncurses.so
+ln -sfv libncursesw.so /usr/lib/libncurses.so
 # ------------------------------

@@ -35,6 +35,7 @@
 ## assumptions
 
 -- NixOS
+-- `20GB` minimum free disk
 -- `doas` instead of `sudo`
 -- `nix` package manager for dependencies
 

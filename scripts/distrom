@@ -123,6 +123,7 @@ tee -a "$VYASA"/sbin/init > /dev/null << 'EOF' &&
 echo -e "\e[1;36m### INIT SCRIPT ###\e[0m"
 
 export HOME=/home PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 mount -t devtmpfs dev /dev
 mountpoint -q dev/pts || { mkdir -p dev/pts && mount -t devpts dev/pts dev/pts;}
@@ -226,10 +227,8 @@ nameserver 1.1.1.1
 nameserver 8.8.8.8
 EOF
 
-#mkdir "$VYASA"/etc/ssl/certs -p
-#wget https://curl.haxx.se/ca/cacert.pem
-#cp cacert.pem "$VYASA"/etc/ssl/certs/ca-certificates.crt
-#rm cacert.pem 
+mkdir "$VYASA"/etc/ssl/certs -p
+cp sources/cacert.pem "$VYASA"/etc/ssl/certs/ca-certificates.crt
 
 tee -a "$VYASA"/etc/os-release > /dev/null << 'EOF' &&
 NAME="Vyasa linux"

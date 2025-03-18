@@ -38,9 +38,4 @@
 ```
 ###### Ignore the Notes.norg; it's more like a scratchpad
 
-## Vyasa linux screens
-![QEMU console](./screens/console.jpg)
-
-![QEMU window](./screens/qemu.jpg)
-
 

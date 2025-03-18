@@ -36,6 +36,5 @@
 -- `doas` instead of `sudo`
 -- `nix` package manager for dependencies
 ```
-###### Ignore the Notes.norg; it's more like a scratchpad
 
 

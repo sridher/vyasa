@@ -890,15 +890,3 @@ SECONDS=0
 
 
 exit 0
-fail
-
-# Setup just built toolchain
-PATH=$VYASA/tools/bin:$PATH
-TOOL="$VYASA_TGT"-
-CC="$TOOL"gcc
-CXX="$TOOL"g++
-
-env | rg "vyasa|VYASA"
-
-
-exit 0

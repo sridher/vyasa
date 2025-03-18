@@ -1,8 +1,6 @@
 # Vyasa minimal linux
 
-[![QEMU console](./screens/console.jpg)]
-
-[![QEMU window](./screens/qemu.jpg)]
+[![Vyasa linux](https://asciinema.org/a/896Wa2sgEqVuOFWEl6xKLlSmA.svg)](https://asciinema.org/a/896Wa2sgEqVuOFWEl6xKLlSmA)
 
 ## Quick start
 
@@ -41,10 +39,9 @@
 
 ## Ignore the Notes.norg; it's more like a scratchpad
 
-## Vyasa linux building in action
+## Vyasa linux screens
+[![QEMU console](./screens/console.jpg)]
 
-❯ ./scripts/distrom
-[![Vyasa linux](https://asciinema.org/a/85R4jTtjKVRIYXTcKCNq0vzYH.svg)](https://asciinema.org/a/85R4jTtjKVRIYXTcKCNq0vzYH?autoplay=1)
+[![QEMU window](./screens/qemu.jpg)]
 
-❯ ./scripts/vyasa
-[![Vyasa linux](https://asciinema.org/a/85R4jTtjKVRIYXTcKCNq0vzYH.svg)](https://asciinema.org/a/85R4jTtjKVRIYXTcKCNq0vzYH?autoplay=1)
+

@@ -11,6 +11,6 @@ tar -xf /sources/iproute2-6.13.0.tar.xz
 cd iproute2-6.13.0
 ./configure --libbpf_force off --prefix=/usr
 
-make -j16
+make -j$(nproc)
 make install
 # ------------------------------

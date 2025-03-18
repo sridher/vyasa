@@ -11,6 +11,6 @@ cd musl-1.2.5/build
 
 ../configure --host $VYASA_TGT --disable-werror --libdir=/lib --prefix=/usr
 
-make -j16
+make -j$(nproc)
 make install
 # ------------------------------

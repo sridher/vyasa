@@ -10,7 +10,7 @@ tar -xf /sources/lz4-1.10.0.tar.gz
 mkdir lz4-1.10.0/build -p
 cd lz4-1.10.0
 
-make BUILD_STATIC=no PREFIX=/usr -j16
+make BUILD_STATIC=no PREFIX=/usr -j$(nproc)
 
 #make -j1 check
 

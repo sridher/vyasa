@@ -19,7 +19,7 @@ sh ./Configure -des                                      \
              -D vendorlib=/usr/lib/perl5/5.40/vendor_perl \
              -D vendorarch=/usr/lib/perl5/5.40/vendor_perl
 
-make -j16
+make -j$(nproc)
 
 make install
 # ------------------------------

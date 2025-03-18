@@ -12,6 +12,6 @@ cd bc-7.0.3/build
 
 CC=gcc ../configure --prefix=/usr -G -O3 -r
 
-make -j16
+make -j$(nproc)
 make install
 # ------------------------------

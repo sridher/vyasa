@@ -8,7 +8,7 @@ cd /builds
 rm -rf dnsmasq-2.90
 tar -xf /sources/dnsmasq-2.90.tar.xz
 cd dnsmasq-2.90
-make -j16
+make -j$(nproc)
 cp src/dnsmasq /bin
 make install
 # ------------------------------

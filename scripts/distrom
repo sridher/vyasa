@@ -35,6 +35,7 @@ if [ ! -f /bin/bash ]; then
     echo -e "\e[1;30m---------------"
     echo -e "\e[1;34mSymlinking bash"
     echo -e "\e[1;30m---------------"
+    $RUNAS ln -s /run/current-system/sw/bin/pwd /bin/pwd 
     $RUNAS ln -s /run/current-system/sw/bin/bash /bin/bash 
     $RUNAS ln -s /etc/profiles/per-user/js/bin/python3 /usr/bin
 fi
@@ -56,13 +57,14 @@ VYASA_TGT=$(uname -m)-vyasa-linux-gnu
 #HOST=x86_64-linux-musl #overwriting to host
 
 
-#mkdir toolchains 
-#cd toolchains
+mkdir toolchains -p
+cd toolchains
 #wget https://landley.net/bin/toolchains/25-03-2024/x86_64-linux-musl-cross.tar.xz
-##wget https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64/tarballs/x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
+! [ -f x86-64--glibc--bleeding-edge-2024.05-1.tar.xz ] && wget -c https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64/tarballs/x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
 #tar -xf x86_64-linux-musl-cross.tar.xz
-##tar -xf x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
-#cd $WS
+rm -rf x86-64--glibc--bleeding-edge-2024.05-1
+tar -xf x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
+cd $WS
 
 #TOOLCHAIN=$WS/toolchains/x86_64-linux-musl-cross/bin/x86_64-linux-musl
 TOOLCHAIN=$WS/toolchains/x86-64--glibc--bleeding-edge-2024.05-1/bin/x86_64-buildroot-linux-gnu
@@ -113,7 +115,7 @@ install -dv -m 1777 "$VYASA"/tmp "$VYASA"/var/tmp
 
 
 # DEBUG:
-cp /tmp/nxjs/{ash,dash,rldd} $VYASA/bin/
+#cp /tmp/nxjs/{ash,dash,rldd} $VYASA/bin/
 
 # init
 tee -a "$VYASA"/sbin/init > /dev/null << 'EOF' &&
@@ -278,7 +280,7 @@ cd binutils-2.44/sbuild
     --enable-new-dtags          \
     --enable-default-hash-style=gnu
 
-make -j16
+make -j$(nproc)
 make install
 cd $WS
 
@@ -295,10 +297,10 @@ tar -xf ../sources/gcc-14.2.0.tar.xz
 
 cd gcc-14.2.0
 
-tar -xf ../../sources/mpfr-4.1.0.tar.bz2
+tar -xf ../../sources/mpfr-4.1.0.tar.xz
 mv -v mpfr-4.1.0 mpfr
-tar -xf ../../sources/gmp-6.2.1.tar.bz2
-mv -v gmp-6.2.1 gmp
+tar -xf ../../sources/gmp-6.3.0.tar.xz
+mv -v gmp-6.3.0 gmp
 tar -xf ../../sources/mpc-1.2.1.tar.gz
 mv -v mpc-1.2.1 mpc
 
@@ -331,7 +333,7 @@ cd gcc-14.2.0/sbuild
     --enable-languages=c,c++
 
 
-make -j16
+make -j$(nproc)
 make install
 cd $WS
 
@@ -343,9 +345,9 @@ SECONDS=0
 # Kernel
 # ------------------------------
 cd $WS/builds
-tar -xf ../sources/linux-6.13.5.tar.zst
+tar -xf ../sources/linux-6.13.7.tar.xz
 
-cd linux
+cd linux-6.13.7
 make mrproper
 
 make headers
@@ -370,8 +372,9 @@ ln -sfv ../lib/ld-linux-x86-64.so.2 $VYASA/lib64/ld-lsb-x86-64.so.3
 cd $WS/builds
 tar -xf ../sources/glibc-2.41.tar.xz
 mkdir glibc-2.41/sbuild -p
+cd glibc-2.41
 echo "rootsbindir=/usr/sbin" > configparms
-cd glibc-2.41/sbuild
+cd sbuild
 
 ../configure                    \
     --prefix=/usr               \
@@ -382,7 +385,7 @@ cd glibc-2.41/sbuild
     --disable-nscd                     \
     libc_cv_slibdir=/usr/lib
 
-make -j16
+make -j$(nproc)
 make DESTDIR=$VYASA install
 sed '/RTLDLIST=/s@/usr@@g' -i $VYASA/usr/bin/ldd
 cd $WS
@@ -419,7 +422,7 @@ cd gcc-14.2.0/libstdc++-v3/sbuild
     --with-libstdcxx-zoneinfo=no    \
     --with-gxx-include-dir=/tools/$VYASA_TGT/include/c++/14.2.0
 
-make -j16
+make -j$(nproc)
 make DESTDIR=$VYASA install
 rm -vf $VYASA/usr/lib/lib{stdc++{,exp,fs},supc++}.la
 cd $WS
@@ -444,7 +447,7 @@ cd m4-1.4.19/build
             --host=$VYASA_TGT \
             --build=$(../build-aux/config.guess)
 
-make -j16
+make -j$(nproc)
 
 make DESTDIR=$VYASA install
 cd $WS
@@ -484,7 +487,7 @@ cd ncurses-6.5/build
             --disable-stripping          \
             AWK=gawk
 
-make -j16
+make -j$(nproc)
 
 make DESTDIR=$VYASA TIC_PATH=$(pwd)/../tuild/progs/tic install
 ln -sv libncursesw.so $VYASA/usr/lib/libncurses.so
@@ -510,7 +513,7 @@ cd bash-5.2.37/build
             --without-bash-malloc \
             CFLAGS="-Wno-error=implicit-function-declaration"
 
-make -j16
+make -j$(nproc)
 
 make DESTDIR=$VYASA install
 ln -sv bash $VYASA/bin/sh
@@ -534,7 +537,7 @@ export FORCE_UNSAFE_CONFIGURE=1 # error: you should not run configure as root
             --build=$(../build-aux/config.guess)\
             --without-selinux 
 
-make -j16
+make -j$(nproc)
 
 make DESTDIR=$VYASA install
 cd $WS
@@ -555,7 +558,7 @@ cd diffutils-3.11/build
             --host=$VYASA_TGT \
             --build=$(../build-aux/config.guess)
 
-make -j16
+make -j$(nproc)
 
 make DESTDIR=$VYASA install
 cd $WS
@@ -585,7 +588,7 @@ cd file-5.46/build
 
 ../configure --prefix=/usr --host=$VYASA_TGT --build=$(../config.guess)
 
-make FILE_COMPILE=$(pwd)/../tuild/src/file -j16
+make FILE_COMPILE=$(pwd)/../tuild/src/file -j$(nproc)
 
 make DESTDIR=$VYASA install
 
@@ -608,7 +611,7 @@ cd findutils-4.10.0/build
             --host=$VYASA_TGT \
             --build=$(../build-aux/config.guess)
 
-make -j16
+make -j$(nproc)
 
 make DESTDIR=$VYASA install
 cd $WS
@@ -630,7 +633,7 @@ cd gawk-5.3.1/build
             --host=$VYASA_TGT \
             --build=$(../build-aux/config.guess)
 
-make -j16
+make -j$(nproc)
 
 make DESTDIR=$VYASA install
 cd $WS
@@ -651,7 +654,7 @@ cd grep-3.11/build
             --host=$VYASA_TGT \
             --build=$(../build-aux/config.guess)
 
-make -j16
+make -j$(nproc)
 
 make DESTDIR=$VYASA install
 cd $WS
@@ -670,7 +673,7 @@ cd gzip-1.13/build
 
 ../configure --prefix=/usr --host=$VYASA_TGT 
 
-make -j16
+make -j$(nproc)
 
 make DESTDIR=$VYASA install
 cd $WS
@@ -692,7 +695,7 @@ cd make-4.4.1/build
             --without-guile   \
             --build=$(../build-aux/config.guess)
 
-make -j16
+make -j$(nproc)
 
 make DESTDIR=$VYASA install
 cd $WS
@@ -713,7 +716,7 @@ cd patch-2.7.6/build
             --host=$VYASA_TGT \
             --build=$(../build-aux/config.guess)
 
-make -j16
+make -j$(nproc)
 
 make DESTDIR=$VYASA install
 cd $WS
@@ -734,7 +737,7 @@ cd sed-4.9/build
             --host=$VYASA_TGT \
             --build=$(../build-aux/config.guess)
 
-make -j16
+make -j$(nproc)
 
 make DESTDIR=$VYASA install
 cd $WS
@@ -755,7 +758,7 @@ cd tar-1.35/build
             --host=$VYASA_TGT \
             --build=$(../build-aux/config.guess)
 
-make -j16
+make -j$(nproc)
 
 make DESTDIR=$VYASA install
 cd $WS
@@ -777,7 +780,7 @@ cd xz-5.6.4/build
             --build=$(../build-aux/config.guess)\
             --disable-static                  \
 
-make -j16
+make -j$(nproc)
 
 make DESTDIR=$VYASA install
 rm -vf $VYASA/usr/lib/liblzma.la
@@ -812,10 +815,10 @@ cd binutils-2.44/build
     --enable-new-dtags          \
     --enable-default-hash-style=gnu
 
-make -j16
+make -j$(nproc)
 #make DESTDIR=$VYASA install
 steam-run make DESTDIR=$VYASA install # nixos  HACK: for /usr/local/lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
-#CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j16
+#CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j$(nproc)
 rm -vf $VYASA/usr/lib/lib{bfd,ctf,ctf-nobfd,opcodes,sframe}.{a,la}
 cd $WS
 
@@ -831,10 +834,10 @@ tar -xf ../sources/gcc-14.2.0.tar.xz
 
 cd gcc-14.2.0
 
-tar -xf ../../sources/mpfr-4.1.0.tar.bz2
+tar -xf ../../sources/mpfr-4.1.0.tar.xz
 mv -v mpfr-4.1.0 mpfr
-tar -xf ../../sources/gmp-6.2.1.tar.bz2
-mv -v gmp-6.2.1 gmp
+tar -xf ../../sources/gmp-6.3.0.tar.xz
+mv -v gmp-6.3.0 gmp
 tar -xf ../../sources/mpc-1.2.1.tar.gz
 mv -v mpc-1.2.1 mpc
 
@@ -873,7 +876,7 @@ export CPPFLAGS="-Wno-error -Wno-error=implicit-function-declaration -Wno-error=
     --enable-languages=c,c++                       \
     --disable-werror            
 
-make -j16
+make -j$(nproc)
 make DESTDIR=$VYASA install
 ln -sv gcc $VYASA/usr/bin/cc
 cd $WS
@@ -898,15 +901,5 @@ CXX="$TOOL"g++
 
 env | rg "vyasa|VYASA"
 
-# Static
-#❯ ldd /tmp/nxjs/fish
-#❯ cp result/bin/fish* /tmp/nxjs/
-#❯ nix build -L nixpkgs#pkgsStatic.fish
-#❯ nix build -L nixpkgs#pkgsStatic.toybox
-
-#pkgs.gettext
-#make[2]: Entering directory '/home/js/Works/JS/vyasa/builds/glibc-2.41/po'
-#msgfmt -o /home/js/Works/JS/vyasa/builds/glibc-2.41/build/po/be.mo be.po
-#make[2]: msgfmt: No such file or directory
 
 exit 0

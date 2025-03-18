@@ -2,9 +2,6 @@
   description = "Linux kernel environment";
 
   inputs = {
-    #nixpkgs.url = "nixpkgs/release-20.09";
-    #https://github.com/landley/toybox/issues/450
-
     #nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
     #nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs.url = "github:nixos/nixpkgs/5135c59491985879812717f4c9fea69604e7f26f";

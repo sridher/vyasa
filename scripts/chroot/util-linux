@@ -25,7 +25,7 @@ mkdir -pv /var/lib/hwclock
             --without-python      \
             ADJTIME_PATH=/var/lib/hwclock/adjtime \
             --docdir=/usr/share/doc/util-linux-2.40.4
-make -j16
+make -j$(nproc)
 
 make install
 # ------------------------------

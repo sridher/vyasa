@@ -5,10 +5,10 @@ set -e -u -o pipefail
 # openssl
 # ------------------------------
 cd /builds
-rm -rf openssl-openssl-3.4.1
+rm -rf openssl-3.4.1
 tar -xf /sources/openssl-3.4.1.tar.gz
-mkdir openssl-openssl-3.4.1/build -p
-cd openssl-openssl-3.4.1/build
+mkdir openssl-3.4.1/build -p
+cd openssl-3.4.1/build
 
 ../config --prefix=/usr         \
          --openssldir=/etc/ssl \
@@ -16,7 +16,7 @@ cd openssl-openssl-3.4.1/build
          shared                \
          zlib-dynamic
 
-make -j16
+make -j$(nproc)
 sed -i '/INSTALL_LIBS/s/libcrypto.a libssl.a//' Makefile
 
 make MANSUFFIX=ssl install

@@ -5,10 +5,10 @@ set -e -u -o pipefail
 # iana
 # ------------------------------
 cd /builds
-rm -rf iana-etc-20250304
-tar -xf /sources/iana-etc-20250304.tar.gz
+rm -rf iana-etc-20250311
+tar -xf /sources/iana-etc-20250311.tar.gz
 
-cd iana-etc-20250304
+cd iana-etc-20250311
 
 cp services protocols /etc
 # ------------------------------

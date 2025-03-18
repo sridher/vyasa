@@ -18,7 +18,7 @@ cd glibc-2.41/build
              --disable-nscd                           \
              libc_cv_slibdir=/usr/lib
 
-make -j16
+make -j$(nproc)
 
 touch /etc/ld.so.conf
 sed '/test-installation/s@$(PERL)@echo not running@' -i ../Makefile
@@ -31,7 +31,7 @@ localedef -i C -f UTF-8 C.UTF-8
 localedef -i en_US -f UTF-8 en_US.UTF-8
 localedef -i te_IN -f UTF-8 te_IN.UTF-8
 
-make localedata/install-locales
+make localedata/install-locales -j$(nproc)
 
 tar -xf /sources/tzdata2025a.tar.gz
 ZONEINFO=/usr/share/zoneinfo

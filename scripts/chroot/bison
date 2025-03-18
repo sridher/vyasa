@@ -12,7 +12,7 @@ cd bison-3.8.2/build
 
 ../configure --prefix=/usr
 
-make -j16
+make -j$(nproc)
 
 make install
 # ------------------------------

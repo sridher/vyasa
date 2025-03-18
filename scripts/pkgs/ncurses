@@ -23,7 +23,7 @@ cd ncurses-6.5/build
             --enable-pc-files       \
             --with-pkg-config-libdir=/usr/lib/pkgconfig
 
-make -j16
+make -j$(nproc)
 
 make install
 ln -sfv libncursesw.so /usr/lib/libncurses.so

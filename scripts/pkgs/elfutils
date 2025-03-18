@@ -15,6 +15,6 @@ autoreconf -i -f
 cd build/
 ../configure --host $VYASA_TGT --disable-option-checking --enable-maintainer-mode --prefix=/usr
 
-make -j16
+make -j$(nproc)
 make install
 # ------------------------------

@@ -13,7 +13,7 @@ cd Python-3.13.2/build
 ../configure --prefix=/usr\
             --enable-shared \
             --without-ensurepip
-make -j16
+make -j$(nproc)
 
 make install
 # ------------------------------

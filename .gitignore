@@ -1,6 +1,7 @@
-sources
 sources/*.{md5,minisig,sha,sha1,sha256,sha512,sig}
 sources/*.tar.{bz2,gz,xz,zst,zstd}
+sources/*
+!sources/source.pkgs
 
 builds
 vbuilds

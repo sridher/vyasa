@@ -267,7 +267,7 @@ cd $WS
 
 $RUNAS modprobe nbd max_parts=8
 
-$RUNAS rm vyasa.qcow2
+$RUNAS rm -f vyasa.qcow2
 qemu-img create -f qcow2 vyasa.qcow2 7G
 
 #lsmod | grep nbd
@@ -296,6 +296,9 @@ mkdir $WS/disk -p
 $RUNAS mount /dev/nbd0p1 $WS/disk
 
 $RUNAS cp -R $VYASA/* $WS/disk
+
+sync
+sync
 
 #grub
 $RUNAS grub-install --target=i386-pc --root-directory=$WS/disk --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/nbd0

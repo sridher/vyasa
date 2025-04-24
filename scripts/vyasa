@@ -164,6 +164,9 @@ make tinyconfig
 ./scripts/config --set-val CONFIG_DNS_RESOLVER y
 ./scripts/config --set-val CONFIG_POSIX_TIMERS y
 
+# File locking
+./scripts/config --set-val CONFIG_FILE_LOCKING y
+
 # Network
 #EXPERT
 #FUTEX

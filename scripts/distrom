@@ -5,7 +5,7 @@ set -e -u -o pipefail
 # development environment
 #nix develop
 
-RUNAS="doas" # or sudo
+RUNAS="" # doas or sudo
 
 #https://www.shellhacks.com/bash-colors/
 #❯ neofetch
@@ -28,19 +28,6 @@ echo -e "\e[1;34mBuilding Vyasa linux....\e[0m"
 # Warmup admin
 $RUNAS echo -e "\e[1;36m$(uname -a)\e[0m"
 
-# FIX: `NIXOS` : ../tools/all_syscalls: cannot execute: required file not found
-# Applications expecting absolute path
-if [ ! -f /bin/bash ]; then
-    echo -e "\e[1;31mBash not found!\n"
-    echo -e "\e[1;30m---------------"
-    echo -e "\e[1;34mSymlinking bash"
-    echo -e "\e[1;30m---------------"
-    $RUNAS ln -s /run/current-system/sw/bin/pwd /bin/pwd 
-    $RUNAS ln -s /run/current-system/sw/bin/bash /bin/bash 
-    $RUNAS ln -s /etc/profiles/per-user/js/bin/python3 /usr/bin
-fi
-
-
 # Cleanup
 SECONDS=0
 TOTALTIME=0
@@ -57,28 +44,28 @@ VYASA_TGT=$(uname -m)-vyasa-linux-gnu
 #HOST=x86_64-linux-musl #overwriting to host
 
 
-mkdir toolchains -p
-cd toolchains
-#wget https://landley.net/bin/toolchains/25-03-2024/x86_64-linux-musl-cross.tar.xz
-! [ -f x86-64--glibc--bleeding-edge-2024.05-1.tar.xz ] && wget -c https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64/tarballs/x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
-#tar -xf x86_64-linux-musl-cross.tar.xz
-rm -rf x86-64--glibc--bleeding-edge-2024.05-1
-tar -xf x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
-cd $WS
-
-#TOOLCHAIN=$WS/toolchains/x86_64-linux-musl-cross/bin/x86_64-linux-musl
-TOOLCHAIN=$WS/toolchains/x86-64--glibc--bleeding-edge-2024.05-1/bin/x86_64-buildroot-linux-gnu
-TOOL="$TOOLCHAIN"-
-CC="$TOOL"gcc
-CXX="$TOOL"g++
-MAKE=$(which make)
-
-## Sysroot
-SYSROOT=$($CC --print-sysroot)
-#export SYSROOT=$($CC --print-sysroot)
-#cp -R "$SYSROOT"/bin $VYASA/
-#cp -R "$SYSROOT"/include $VYASA/
-#cp -R "$SYSROOT"/lib $VYASA/
+#mkdir toolchains -p
+#cd toolchains
+##wget https://landley.net/bin/toolchains/25-03-2024/x86_64-linux-musl-cross.tar.xz
+##! [ -f x86-64--glibc--bleeding-edge-2024.05-1.tar.xz ] && wget -c https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64/tarballs/x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
+##tar -xf ../sources/x86_64-linux-musl-cross.tar.xz
+#rm -rf x86-64--glibc--bleeding-edge-2024.05-1
+#tar -xf ../sources/x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
+#cd $WS
+#
+##TOOLCHAIN=$WS/toolchains/x86_64-linux-musl-cross/bin/x86_64-linux-musl
+#TOOLCHAIN=$WS/toolchains/x86-64--glibc--bleeding-edge-2024.05-1/bin/x86_64-buildroot-linux-gnu
+#TOOL="$TOOLCHAIN"-
+#CC="$TOOL"gcc
+#CXX="$TOOL"g++
+#MAKE=$(which make)
+#
+#### Sysroot
+#SYSROOT=$($CC --print-sysroot)
+###export SYSROOT=$($CC --print-sysroot)
+###cp -R "$SYSROOT"/bin $VYASA/
+###cp -R "$SYSROOT"/include $VYASA/
+###cp -R "$SYSROOT"/lib $VYASA/
 
 
 ## FIX: `Workaround` mkpasswd.c:(.text.mkpasswd_main+0x1cc): undefined reference to `crypt'
@@ -331,9 +318,11 @@ cd gcc-14.2.0/sbuild
     --disable-libstdcxx       \
     --enable-languages=c,c++
 
-
 make -j$(nproc)
 make install
+cd ..
+cat gcc/limitx.h gcc/glimits.h gcc/limity.h > `dirname $($VYASA/tools/bin/$VYASA_TGT-gcc -print-libgcc-file-name)`/include/limits.h
+#bash fixincludes/mkheaders
 cd $WS
 
 duration=$SECONDS
@@ -344,9 +333,9 @@ SECONDS=0
 # Kernel
 # ------------------------------
 cd $WS/builds
-tar -xf ../sources/linux-6.13.7.tar.xz
+tar -xf ../sources/linux-6.14.4.tar.xz
 
-cd linux-6.13.7
+cd linux-6.14.4
 make mrproper
 
 make headers
@@ -434,6 +423,11 @@ SECONDS=0
 ###################################################
 
 PATH=$PATH:$VYASA/usr/bin:$VYASA/tools/bin
+##VYASA_TGT=$(uname -m)-vyasa-linux-gnu
+#TOOL="$VYASA_TGT"-
+#CC="$TOOL"gcc
+#CXX="$TOOL"g++
+#MAKE=$(which make)
 
 # M4
 # ------------------------------
@@ -816,7 +810,7 @@ cd binutils-2.44/build
 
 make -j$(nproc)
 #make DESTDIR=$VYASA install
-steam-run make DESTDIR=$VYASA install # nixos  HACK: for /usr/local/lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
+make DESTDIR=$VYASA install # nixos  HACK: for /usr/local/lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
 #CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j$(nproc)
 rm -vf $VYASA/usr/lib/lib{bfd,ctf,ctf-nobfd,opcodes,sframe}.{a,la}
 cd $WS

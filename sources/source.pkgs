@@ -1,5 +1,5 @@
-https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.13.7.tar.xz
-https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.13.7.tar.sign
+https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.14.4.tar.xz
+https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.14.4.tar.sign
 https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64/tarballs/x86-64--glibc--bleeding-edge-2024.05-1.tar.xz
 https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64/tarballs/x86-64--glibc--bleeding-edge-2024.05-1.sha256
 https://landley.net/bin/toolchains/25-03-2024/x86_64-linux-musl-cross.tar.xz
@@ -10,9 +10,9 @@ https://mirrors.tuna.tsinghua.edu.cn/gnu/mpfr/mpfr-4.1.0.tar.xz.sig
 https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz
 https://mirrors.tuna.tsinghua.edu.cn/gnu/mpc/mpc-1.2.1.tar.gz
 https://mirrors.tuna.tsinghua.edu.cn/gnu/mpc/mpc-1.2.1.tar.gz.sig
-https://ftp.mpi-inf.mpg.de/mirrors/gnu/mirror/gcc.gnu.org/pub/gcc/releases/gcc-14.2.0/gcc-14.2.0.tar.xz
-https://ftp.mpi-inf.mpg.de/mirrors/gnu/mirror/gcc.gnu.org/pub/gcc/releases/gcc-14.2.0/gcc-14.2.0.tar.xz.sig
-https://mirrors.tuna.tsinghua.edu.cn/gnu/glibc/glibc-2.41.tar.xz.sig
+https://gcc.gnu.org/pub/gcc/releases/gcc-14.2.0/gcc-14.2.0.tar.xz
+https://gcc.gnu.org/pub/gcc/releases/gcc-14.2.0/gcc-14.2.0.tar.xz.sig
+https://mirrors.tuna.tsinghua.edu.cn/gnu/glibc/glibc-2.41.tar.xz
 https://mirrors.tuna.tsinghua.edu.cn/gnu/glibc/glibc-2.41.tar.xz.sig
 https://mirrors.tuna.tsinghua.edu.cn/gnu/m4/m4-1.4.19.tar.xz
 https://mirrors.tuna.tsinghua.edu.cn/gnu/m4/m4-1.4.19.tar.xz.sig

@@ -316,7 +316,7 @@ cd gcc-14.2.0/sbuild
     --disable-libssp          \
     --disable-libvtv          \
     --disable-libstdcxx       \
-    --enable-languages=c,c++
+    --enable-languages=c
 
 make -j$(nproc)
 make install
@@ -819,6 +819,50 @@ duration=$SECONDS
 echo -e "\e[1;33mbinutils compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
 TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
+
+# gcc hack
+# ----------
+cd $WS/builds
+
+mkdir gcc-14.2.0/sbuild -p
+
+cd gcc-14.2.0/sbuild
+../configure                    \
+    --prefix=$VYASA/tools       \
+    --with-sysroot=$VYASA       \
+    --target=$VYASA_TGT         \
+    --with-glibc-version=2.41   \
+    --with-newlib             \
+    --without-headers         \
+    --enable-default-pie      \
+    --enable-default-ssp      \
+    --disable-nls             \
+    --disable-shared          \
+    --disable-multilib        \
+    --disable-threads         \
+    --disable-libatomic       \
+    --disable-libgomp         \
+    --disable-libquadmath     \
+    --disable-libssp          \
+    --disable-libvtv          \
+    --disable-libstdcxx       \
+    --enable-languages=c,c++
+
+make -j$(nproc)
+make install
+cd ..
+cat gcc/limitx.h gcc/glimits.h gcc/limity.h > `dirname $($VYASA/tools/bin/$VYASA_TGT-gcc -print-libgcc-file-name)`/include/limits.h
+#bash fixincludes/mkheaders
+cd $WS
+
+duration=$SECONDS
+echo -e "\e[1;32mStage 1: \e[1;33mgcc hack took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+TOTALTIME=$((TOTALTIME + duration))
+SECONDS=0
+
+
+#-----------
+
 
 # gcc
 # ------------------------------

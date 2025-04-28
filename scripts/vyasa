@@ -6,7 +6,7 @@ set -e -u -o pipefail
 # bwrap/chroot develop
 # nix develop
 
-RUNAS="doas" # or sudo
+RUNAS="" # doas or sudo
 
 #https://www.shellhacks.com/bash-colors/
 #❯ neofetch
@@ -37,18 +37,7 @@ export WS VYASA VYASA_TGT
 $RUNAS echo -e "\e[1;36m$(uname -a)\e[0m"
 $RUNAS chown -R root:root "$VYASA"/{usr,lib,lib64,var,etc,bin,sbin}
 
-# FIX: `NIXOS` : ../tools/all_syscalls: cannot execute: required file not found
-# Applications expecting absolute path
-if [ ! -f /bin/bash ]; then
-    echo -e "\e[1;31mBash not found!\n"
-    echo -e "\e[1;30m---------------"
-    echo -e "\e[1;34mSymlinking bash"
-    echo -e "\e[1;30m---------------"
-    $RUNAS ln -s /run/current-system/sw/bin/pwd /bin/pwd 
-    $RUNAS ln -s /run/current-system/sw/bin/bash /bin/bash
-    $RUNAS ln -s /etc/profiles/per-user/js/bin/python3 /usr/bin
-fi
-
+#mount -t proc /proc vyasa-amd64/proc
 
 # Cleanup
 SECONDS=0
@@ -109,9 +98,9 @@ bash -e ./scripts/wrap /vyasa/chroot/cleanup
 # Kernel
 # ------------------------------
 cd $WS/builds
-tar -xf ../sources/linux-6.13.7.tar.xz
+tar -xf ../sources/linux-6.14.4.tar.xz
 
-cd linux-6.13.7
+cd linux-6.14.4
 make distclean
 make tinyconfig
 

@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# gzip
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/gzip-1.13.tar.xz
+mkdir gzip-1.13/build -p
+cd gzip-1.13/build
+
+../configure --prefix=/usr --host=$VYASA_TGT 
+
+make -j$(nproc)
+
+make DESTDIR=$VYASA install
+# ------------------------------
+

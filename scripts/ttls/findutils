@@ -1,0 +1,20 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# findutils
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/findutils-4.10.0.tar.xz
+mkdir findutils-4.10.0/build -p
+cd findutils-4.10.0/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(../build-aux/config.guess)
+
+make -j$(nproc)
+
+make DESTDIR=$VYASA install
+# ------------------------------
+

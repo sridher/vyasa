@@ -1,0 +1,20 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# patch
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/patch-2.7.6.tar.xz
+mkdir patch-2.7.6/build -p
+cd patch-2.7.6/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(../build-aux/config.guess)
+
+make -j$(nproc)
+
+make DESTDIR=$VYASA install
+# ------------------------------
+

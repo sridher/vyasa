@@ -1,0 +1,61 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# gcc
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/gcc-14.2.0.tar.xz
+
+cd gcc-14.2.0
+
+tar -xf ../../sources/mpfr-4.1.0.tar.xz
+mv -v mpfr-4.1.0 mpfr
+tar -xf ../../sources/gmp-6.3.0.tar.xz
+mv -v gmp-6.3.0 gmp
+tar -xf ../../sources/mpc-1.2.1.tar.gz
+mv -v mpc-1.2.1 mpc
+
+sed -e '/m64=/s/lib64/lib/' -i.orig gcc/config/i386/t-linux64
+
+sed '/thread_header =/s/@.*@/gthr-posix.h/' -i libgcc/Makefile.in libstdc++-v3/include/Makefile.in
+
+cd $WS/builds
+
+mkdir gcc-14.2.0/build -p
+
+cd gcc-14.2.0/build
+
+export CFLAGS="-Wno-error -Wno-error=implicit-function-declaration -Wno-error=format-security"
+export CXXFLAGS="-Wno-error -Wno-error=implicit-function-declaration -Wno-error=format-security"
+export CPPFLAGS="-Wno-error -Wno-error=implicit-function-declaration -Wno-error=format-security"
+#[-Werror=format-security]
+
+../configure                    \
+    --prefix=/usr               \
+    --host=$VYASA_TGT           \
+    --build=$(../config.guess)  \
+    --target=$VYASA_TGT         \
+    LDFLAGS_FOR_TARGET=-L$PWD/$VYASA_TGT/libgcc    \
+    --with-build-sysroot=$VYASA                    \
+    --enable-default-pie                           \
+    --enable-default-ssp                           \
+    --disable-nls                                  \
+    --disable-multilib                             \
+    --disable-libatomic                            \
+    --disable-libgomp                              \
+    --disable-libquadmath                          \
+    --disable-libsanitizer                         \
+    --disable-libssp                               \
+    --disable-libvtv                               \
+    --enable-languages=c,c++                       \
+    --disable-werror            
+
+make -j$(nproc)
+make DESTDIR=$VYASA install
+ln -sv gcc $VYASA/usr/bin/cc
+
+#❯ echo 'int main(){}' | $VYASA/tools/bin/$VYASA_TGT-gcc -xc -
+#❯ echo 'int main(){}' | $VYASA/tools/bin/$VYASA_TGT-gcc -xc++ --sysroot=$VYASA -
+# ------------------------------
+

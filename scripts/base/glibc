@@ -1,11 +1,21 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
 # Glibc
 # ------------------------------
-cd /builds
-rm -rf glibc-2.41.1
-tar -xf /sources/glibc-2.41.1.tar.xz
-mkdir glibc-2.41.1/sbuild -p
+
+# for standard only
+mkdir $VYASA/lib64
+ln -sfv ../lib/ld-linux-x86-64.so.2 $VYASA/lib64
+ln -sfv ../lib/ld-linux-x86-64.so.2 $VYASA/lib64/ld-lsb-x86-64.so.3
+
+cd $WS/builds
+tar -xf ../sources/glibc-2.41.tar.xz
+mkdir glibc-2.41/sbuild -p
+cd glibc-2.41
 echo "rootsbindir=/usr/sbin" > configparms
-cd glibc-2.41.1/sbuild
+cd sbuild
 
 ../configure                    \
     --prefix=/usr               \
@@ -17,5 +27,6 @@ cd glibc-2.41.1/sbuild
     libc_cv_slibdir=/usr/lib
 
 make -j$(nproc)
-make install
+make DESTDIR=$VYASA install
+sed '/RTLDLIST=/s@/usr@@g' -i $VYASA/usr/bin/ldd
 # ------------------------------

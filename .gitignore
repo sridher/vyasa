@@ -84,3 +84,5 @@ vyasa.*.qcow2
 vyasa.qcow2
 vyasa.img
 rootfs
+
+timings.txt

@@ -1,0 +1,35 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# binutils-2.44
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/binutils-2.44.tar.xz
+
+cd binutils-2.44
+sed '6031s/$add_dir//' -i ltmain.sh
+cd $WS/builds
+
+mkdir binutils-2.44/build -p
+cd binutils-2.44/build
+
+../configure                    \
+    --prefix=/usr               \
+    --host=$VYASA_TGT           \
+    --build=$(../config.guess)  \
+    --enable-shared             \
+    --enable-gprofng=no         \
+    --disable-nls               \
+    --disable-werror            \
+    --enable-64-bit-bfd         \
+    --enable-new-dtags          \
+    --enable-default-hash-style=gnu
+
+make -j$(nproc)
+#make DESTDIR=$VYASA install
+make DESTDIR=$VYASA install # nixos  HACK: for /usr/local/lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
+#CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j$(nproc)
+rm -vf $VYASA/usr/lib/lib{bfd,ctf,ctf-nobfd,opcodes,sframe}.{a,la}
+# ------------------------------
+

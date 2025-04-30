@@ -1,0 +1,21 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# gwak
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/gawk-5.3.1.tar.xz
+#tar --lzip -xf ../sources/gawk-5.3.1.tar.lz
+mkdir gawk-5.3.1/build -p
+cd gawk-5.3.1/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(../build-aux/config.guess)
+
+make -j$(nproc)
+
+make DESTDIR=$VYASA install
+# ------------------------------
+

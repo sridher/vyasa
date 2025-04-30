@@ -1,0 +1,27 @@
+# Rootfs dirs
+mkdir -p "$VYASA"/{dev,etc/rc,proc,root,sys,run/lock,usr/{bin,sbin,lib}}
+ln -s usr/{bin,sbin,lib} "$VYASA"
+#chmod a+rwxt "$VYASA"/tmp 
+
+mkdir -pv "$VYASA"/{boot,home,mnt,opt,srv}
+
+mkdir -pv "$VYASA"/etc/{opt,sysconfig}
+mkdir -pv "$VYASA"/lib/firmware
+mkdir -pv "$VYASA"/media/{floppy,cdrom}
+mkdir -pv "$VYASA"/usr/{,local/}{include,src}
+mkdir -pv "$VYASA"/usr/lib/locale
+mkdir -pv "$VYASA"/usr/local/{bin,lib,sbin}
+mkdir -pv "$VYASA"/usr/{,local/}share/{color,dict,doc,info,locale,man}
+mkdir -pv "$VYASA"/usr/{,local/}share/{misc,terminfo,zoneinfo}
+mkdir -pv "$VYASA"/usr/{,local/}share/man/man{1..8}
+mkdir -pv "$VYASA"/var/{cache,local,log,mail,opt,spool}
+mkdir -pv "$VYASA"/var/lib/{color,misc,locate}
+
+ln -sfv /run "$VYASA"/var/run
+ln -sfv /run/lock "$VYASA"/var/lock
+
+install -dv -m 0750 "$VYASA"/root
+install -dv -m 1777 "$VYASA"/tmp "$VYASA"/var/tmp
+
+
+

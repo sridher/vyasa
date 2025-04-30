@@ -1,0 +1,25 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# binutils-2.44
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/binutils-2.44.tar.xz
+
+mkdir binutils-2.44/sbuild -p
+cd binutils-2.44/sbuild
+../configure                    \
+    --prefix=$VYASA/tools       \
+    --with-sysroot=$VYASA       \
+    --target=$VYASA_TGT         \
+    --disable-nls               \
+    --enable-gprofng=no         \
+    --disable-werror            \
+    --enable-new-dtags          \
+    --enable-default-hash-style=gnu
+
+make -j$(nproc)
+make install
+# ------------------------------
+

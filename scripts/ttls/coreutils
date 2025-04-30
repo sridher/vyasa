@@ -1,0 +1,22 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# Coreutils
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/coreutils-9.6.tar.xz
+mkdir coreutils-9.6/build -p
+cd coreutils-9.6/build
+
+export FORCE_UNSAFE_CONFIGURE=1 # error: you should not run configure as root
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(../build-aux/config.guess)\
+            --without-selinux 
+
+make -j$(nproc)
+
+make DESTDIR=$VYASA install
+# ------------------------------
+

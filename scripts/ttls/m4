@@ -1,0 +1,20 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# M4
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/m4-1.4.19.tar.xz
+mkdir m4-1.4.19/build -p
+cd m4-1.4.19/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(../build-aux/config.guess)
+
+make -j$(nproc)
+
+make DESTDIR=$VYASA install
+# ------------------------------
+

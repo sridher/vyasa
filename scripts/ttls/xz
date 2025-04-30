@@ -1,0 +1,22 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# xz
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/xz-5.6.4.tar.xz
+mkdir xz-5.6.4/build -p
+cd xz-5.6.4/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(../build-aux/config.guess)\
+            --disable-static                  \
+
+make -j$(nproc)
+
+make DESTDIR=$VYASA install
+rm -vf $VYASA/usr/lib/liblzma.la
+# ------------------------------
+

@@ -1,0 +1,21 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# make
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/make-4.4.1.tar.gz
+mkdir make-4.4.1/build -p
+cd make-4.4.1/build
+
+../configure --prefix=/usr    \
+            --host=$VYASA_TGT \
+            --without-guile   \
+            --build=$(../build-aux/config.guess)
+
+make -j$(nproc)
+
+make DESTDIR=$VYASA install
+# ------------------------------
+

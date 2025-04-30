@@ -6,7 +6,7 @@ set -e -u -o pipefail
 # bwrap/chroot develop
 # nix develop
 
-RUNAS="" # doas or sudo
+RUNAS="doas" # "" or doas or sudo
 
 #https://www.shellhacks.com/bash-colors/
 #❯ neofetch
@@ -36,8 +36,6 @@ export WS VYASA VYASA_TGT
 # Warmup admin
 $RUNAS echo -e "\e[1;36m$(uname -a)\e[0m"
 $RUNAS chown -R root:root "$VYASA"/{usr,lib,lib64,var,etc,bin,sbin}
-
-#mount -t proc /proc vyasa-amd64/proc
 
 # Cleanup
 SECONDS=0
@@ -292,6 +290,12 @@ $RUNAS cp -R $VYASA/* $WS/disk
 
 sync
 sync
+
+#efibootmgr
+#https://github.com/limine-bootloader/limine/tree/v9.2.3-binary
+#grub-efi
+#mount /dev/nbd0 /boot/efi/
+#$RUNAS grub-install --target=$(uname -m)-efi --efi-directory=$WS/disk --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/nbd0
 
 #grub
 $RUNAS grub-install --target=i386-pc --root-directory=$WS/disk --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/nbd0

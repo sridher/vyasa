@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# Check
+# ------------------------------
+#echo 'int main(){}' | $VYASA_TGT-gcc -xc -
+echo 'int main(){}' | $VYASA/tools/bin/$VYASA_TGT-gcc -xc -
+#echo 'int main(){}' | $VYASA/tools/bin/$VYASA_TGT-gcc -xc --with-lib-path=$VYASA/tools/lib -
+#echo 'int main(){}' | $VYASA/tools/bin/$VYASA_TGT-gcc -xc --sysroot=$VYASA/tools/lib/gcc/$VYASA_TGT/14.2.0 -
+echo -e "\e[1;36m\n\n\n\n\n$(readelf -l a.out | grep ld-linux)\n\n\n\n\n\e[0m"
+
+rm -v a.out
+# ------------------------------
+

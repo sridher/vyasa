@@ -1,0 +1,25 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# Bash
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/bash-5.2.37.tar.gz
+mkdir bash-5.2.37/build -p
+cd bash-5.2.37/build
+
+#CFLAGS=-Wno-error -Wno-error=implicit-function-declaration
+#[-Wimplicit-function-declaration]
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(../support/config.guess)\
+            --without-bash-malloc \
+            CFLAGS="-Wno-error=implicit-function-declaration"
+
+make -j$(nproc)
+
+make DESTDIR=$VYASA install
+ln -sv bash $VYASA/bin/sh
+# ------------------------------
+

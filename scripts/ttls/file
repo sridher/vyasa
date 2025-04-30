@@ -1,0 +1,31 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# File
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/file-5.46.tar.gz
+
+mkdir file-5.46/tuild -p
+cd file-5.46/tuild
+
+../configure --disable-bzlib      \
+             --disable-libseccomp \
+             --disable-xzlib      \
+             --disable-zlib
+make
+cd $WS/builds
+
+mkdir file-5.46/build -p
+cd file-5.46/build
+
+../configure --prefix=/usr --host=$VYASA_TGT --build=$(../config.guess)
+
+make FILE_COMPILE=$(pwd)/../tuild/src/file -j$(nproc)
+
+make DESTDIR=$VYASA install
+
+rm -vf $VYASA/usr/lib/libmagic.la
+# ------------------------------
+

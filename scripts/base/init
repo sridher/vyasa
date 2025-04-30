@@ -1,0 +1,122 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+tee -a "$VYASA"/sbin/init > /dev/null << 'EOF' &&
+#!/bin/bash
+echo -e "\e[1;36m### INIT SCRIPT ###\e[0m"
+
+export HOME=/home PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+
+mount -t devtmpfs dev /dev
+mountpoint -q dev/pts || { mkdir -p dev/pts && mount -t devpts dev/pts dev/pts;}
+
+mkdir -p dev/shm
+chmod +t /dev/shm
+
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t tmpfs none /run
+mount -t tmpfs none /tmp
+
+ip link set up eth0
+ip addr add 10.0.2.11/24 dev eth0
+ip route add 10.0.2.2 dev eth0
+ip route add 0/0 via 10.0.2.2 dev eth0
+
+dnsmasq -uroot
+
+echo -e "\e[1;36m\nBoot took $(cut -d' ' -f1 /proc/uptime) seconds\e[0m\n\e[1;34m"
+cat <<!
+
+
+@@@  @@@  @@@ @@@   @@@@@@    @@@@@@    @@@@@@  
+@@@  @@@  @@@ @@@  @@@@@@@@  @@@@@@@   @@@@@@@@ 
+@@!  @@@  @@! !@@  @@!  @@@  !@@       @@!  @@@ 
+!@!  @!@  !@! @!!  !@!  @!@  !@!       !@!  @!@ 
+@!@  !@!   !@!@!   @!@!@!@!  !!@@!!    @!@!@!@! 
+!@!  !!!    @!!!   !!!@!!!!   !!@!!!   !!!@!!!! 
+:!:  !!:    !!:    !!:  !!!       !:!  !!:  !!! 
+ ::!!:!     :!:    :!:  !:!      !:!   :!:  !:! 
+  ::::       ::    ::   :::  :::: ::   ::   ::: 
+   :         :      :   : :  :: : :     :   : : 
+
+
+!
+
+echo -e "\e[0m\e[1;33m\nWelcome to Vysa linux\e[0m\n"
+
+exec /bin/bash
+EOF
+
+chmod +x "$VYASA"/sbin/init
+
+# Distro
+tee -a "$VYASA"/etc/passwd > /dev/null << 'EOF' &&
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/dev/null:/usr/bin/false
+daemon:x:6:6:Daemon User:/dev/null:/usr/bin/false
+guest:x:500:500:guest:/home/guest:/bin/bash
+nobody:x:65534:65534:nobody:/proc/self:/dev/null
+EOF
+
+tee -a "$VYASA"/etc/group > /dev/null << 'EOF' &&
+root:x:0:
+guest:x:500:
+nobody:x:65534:
+bin:x:1:daemon
+sys:x:2:
+kmem:x:3:
+tape:x:4:
+tty:x:5:
+daemon:x:6:
+floppy:x:7:
+disk:x:8:
+lp:x:9:
+dialout:x:10:
+audio:x:11:
+video:x:12:
+utmp:x:13:
+cdrom:x:15:
+adm:x:16:
+input:x:24:
+mail:x:34:
+kvm:x:61:
+wheel:x:97:
+users:x:999:
+EOF
+
+tee -a "$VYASA"/etc/resolv.conf > /dev/null << 'EOF' &&
+nameserver 1.1.1.1
+nameserver 8.8.8.8
+EOF
+
+mkdir "$VYASA"/etc/ssl/certs -p
+cp sources/cacert.pem "$VYASA"/etc/ssl/certs/ca-certificates.crt
+
+tee -a "$VYASA"/etc/os-release > /dev/null << 'EOF' &&
+NAME="Vyasa linux"
+VERSION="pre.alpha"
+EOF
+
+tee -a "$VYASA"/etc/environment > /dev/null << 'EOF' &&
+#Only programs compiled with PAM (Pluggable Authentication Module) support are able to use it (primarily login systems, which subsequently start the shell or user environment).     
+#PATH=/usr/bin:/usr/sbin
+PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
+EOF
+
+tee -a "$VYASA"/etc/profile > /dev/null << 'EOF' &&
+# Executed whenever a shell is entered (e.g. when logging in from the console or over ssh)
+if [ -d /etc/profile.d ]; then
+  for i in /etc/profile.d/*.sh; do
+    if [ -r $i ]; then
+      . $i
+    fi
+  done
+  unset i
+fi
+export HOME=/home PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+EOF
+
+exit 0

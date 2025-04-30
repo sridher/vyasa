@@ -1,0 +1,20 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# Diffutils
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/diffutils-3.11.tar.xz
+mkdir diffutils-3.11/build -p
+cd diffutils-3.11/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(../build-aux/config.guess)
+
+make -j$(nproc)
+
+make DESTDIR=$VYASA install
+# ------------------------------
+

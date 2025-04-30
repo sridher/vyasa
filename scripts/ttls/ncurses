@@ -1,0 +1,40 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# Ncurses
+# ------------------------------
+# BUG: fix tic
+cd $WS/builds
+tar -xf ../sources/ncurses-6.5.tar.gz
+
+mkdir ncurses-6.5/tuild -p
+cd ncurses-6.5/tuild
+
+../configure AWK=gawk
+make -C include
+make -C progs tic
+cd $WS/builds
+
+mkdir ncurses-6.5/build -p
+cd ncurses-6.5/build
+
+../configure --prefix=/usr               \
+            --host=$VYASA_TGT            \
+            --build=$(../config.guess)   \
+            --mandir=/usr/share/man      \
+            --with-manpage-format=normal \
+            --with-shared                \
+            --without-normal             \
+            --with-cxx-shared            \
+            --without-debug              \
+            --without-ada                \
+            --disable-stripping          \
+            AWK=gawk
+
+make -j$(nproc)
+
+make DESTDIR=$VYASA TIC_PATH=$(pwd)/../tuild/progs/tic install
+ln -sv libncursesw.so $VYASA/usr/lib/libncurses.so
+# ------------------------------
+

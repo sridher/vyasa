@@ -1,0 +1,20 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# sed
+# ------------------------------
+cd $WS/builds
+tar -xf ../sources/sed-4.9.tar.xz
+mkdir sed-4.9/build -p
+cd sed-4.9/build
+
+../configure --prefix=/usr   \
+            --host=$VYASA_TGT \
+            --build=$(../build-aux/config.guess)
+
+make -j$(nproc)
+
+make DESTDIR=$VYASA install
+# ------------------------------
+

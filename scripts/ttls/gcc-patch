@@ -5,7 +5,7 @@ set -e -u -o pipefail
 ###################################################
 # Stage 1 from cross compiler
 
-# gcc
+# gcc-patch
 # ------------------------------
 # ❯ ./contrib/download_prerequisites
 # http://gcc.gnu.org/pub/gcc/infrastructure/isl-0.24.tar.bz2
@@ -51,7 +51,7 @@ cd gcc-14.2.0/sbuild
     --disable-libssp          \
     --disable-libvtv          \
     --disable-libstdcxx       \
-    --enable-languages=c
+    --enable-languages=c,c++
 
 make -j$(nproc)
 make install

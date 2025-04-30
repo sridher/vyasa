@@ -6,7 +6,7 @@ set -e -u -o pipefail
 # bwrap/chroot develop
 # nix develop
 
-RUNAS="doas" # "" or doas or sudo
+RUNAS="" # "" or doas or sudo
 
 #https://www.shellhacks.com/bash-colors/
 #❯ neofetch

@@ -5,7 +5,7 @@ set -e -u -o pipefail
 # development environment
 #nix develop
 
-RUNAS="doas" # "" or doas or sudo
+RUNAS="" # "" or doas or sudo
 
 #https://www.shellhacks.com/bash-colors/
 #❯ neofetch
@@ -71,10 +71,10 @@ PATH=$PATH:$VYASA/usr/bin:$VYASA/tools/bin
 
 export WS VYASA VYASA_TGT PATH
 echo "--------------------------------" >> timings.txt
-echo ":: Timing :: package :: duration" > timings.txt
+echo ":: Timing :: package :: duration" >> timings.txt
 echo "---------- Temp Tools ----------" >> timings.txt
 
-for pack in m4 ncurses bash coreutils diffutils file findutils gawk grep gzip make patch sed tar xz binutils gcc;
+for pack in m4 ncurses bash coreutils diffutils file findutils gawk grep gzip make patch sed tar xz binutils gcc-patch gcc;
 do
     echo $pack
     echo -e "\e[1;34m\nInstalling $pack ....\n\e[0m"

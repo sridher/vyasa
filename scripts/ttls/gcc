@@ -28,11 +28,6 @@ mkdir gcc-14.2.0/build -p
 
 cd gcc-14.2.0/build
 
-export CFLAGS="-Wno-error -Wno-error=implicit-function-declaration -Wno-error=format-security"
-export CXXFLAGS="-Wno-error -Wno-error=implicit-function-declaration -Wno-error=format-security"
-export CPPFLAGS="-Wno-error -Wno-error=implicit-function-declaration -Wno-error=format-security"
-#[-Werror=format-security]
-
 ../configure                    \
     --prefix=/usr               \
     --host=$VYASA_TGT           \

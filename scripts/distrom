@@ -31,7 +31,6 @@ $RUNAS echo -e "\e[1;36m$(uname -a)\e[0m"
 # Cleanup
 SECONDS=0
 TOTALTIME=0
-echo ":: Timing :: package :: duration" > timings.txt
 
 $RUNAS rm vyasa.qcow2 builds rootfs disk -rfd
 #$RUNAS rm vyasa.qcow2 builds rootfs disk toolchains -rfd
@@ -42,6 +41,9 @@ VYASA=$(pwd)/rootfs
 VYASA_TGT=$(uname -m)-vyasa-linux-gnu
 
 export WS VYASA VYASA_TGT
+echo "--------------------------------" >> timings.txt
+echo ":: Timing :: package :: duration" > timings.txt
+echo "----------- Toolchain ----------" >> timings.txt
 
 for pack in fhs init binutils gcc glibc check cpp;
 do
@@ -68,6 +70,9 @@ PATH=$PATH:$VYASA/usr/bin:$VYASA/tools/bin
 #MAKE=$(which make)
 
 export WS VYASA VYASA_TGT PATH
+echo "--------------------------------" >> timings.txt
+echo ":: Timing :: package :: duration" > timings.txt
+echo "---------- Temp Tools ----------" >> timings.txt
 
 for pack in m4 ncurses bash coreutils diffutils file findutils gawk grep gzip make patch sed tar xz binutils gcc;
 do

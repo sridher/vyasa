@@ -31,8 +31,6 @@ VYASA="$(pwd)"/rootfs
 VYASA_TGT=$(uname -m)-vyasa-linux-gnu
 #VYASA_TGT=$(uname -m)-vyasa-linux-musl
 
-export WS VYASA VYASA_TGT
-
 # Warmup admin
 $RUNAS echo -e "\e[1;36m$(uname -a)\e[0m"
 $RUNAS chown -R root:root "$VYASA"/{usr,lib,lib64,var,etc,bin,sbin}
@@ -40,6 +38,11 @@ $RUNAS chown -R root:root "$VYASA"/{usr,lib,lib64,var,etc,bin,sbin}
 # Cleanup
 SECONDS=0
 TOTALTIME=0
+
+export WS VYASA VYASA_TGT
+echo "--------------------------------" >> timings.txt
+echo ":: Timing :: package :: duration" >> timings.txt
+echo "------ Chroot Temp Tools -------" >> timings.txt
 
 bash -e ./scripts/wrap /vyasa/chroot/pre
 
@@ -57,6 +60,7 @@ do
     
 duration=$SECONDS
 echo -e "\e[1;33m$pack took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+echo ":: $duration :: $pack :: took $((duration / 60)) minutes and $((duration % 60)) seconds." >> timings.txt
 TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 done
@@ -64,7 +68,12 @@ done
 # Building Kernel and Diskimage
 #❯ qemu-system-x86_64 -machine pc,accel=kvm -cpu host vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
 #❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu host -smp cpus=2 -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
-#❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu EPYC -smp cpus=2 -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+#❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu EPYC-v4 -smp cpus=2 -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+
+# Packages
+echo "--------------------------------" >> timings.txt
+echo ":: Timing :: package :: duration" >> timings.txt
+echo "----------- Packages -----------" >> timings.txt
 
 for pack in man-pages iana glibc zlib bzip xz lz4 zstd file readline m4 bc binutils ncurses nano openssl wget libcap flex iproute dnsmasq2; 
 do
@@ -75,6 +84,7 @@ do
     
 duration=$SECONDS
 echo -e "\e[1;33m$pack took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+echo ":: $duration :: $pack :: took $((duration / 60)) minutes and $((duration % 60)) seconds." >> timings.txt
 TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 done

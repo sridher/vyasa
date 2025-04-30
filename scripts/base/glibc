@@ -17,6 +17,12 @@ cd glibc-2.41
 echo "rootsbindir=/usr/sbin" > configparms
 cd sbuild
 
+export CFLAGS="-Wno-error -Wno-error=implicit-function-declaration -Wno-error=format-security"
+export CXXFLAGS="-Wno-error -Wno-error=implicit-function-declaration -Wno-error=format-security"
+export CPPFLAGS="-Wno-error -Wno-error=implicit-function-declaration -Wno-error=format-security"
+#[-Werror=format-security]
+#[-Werror=attributes]
+
 ../configure                    \
     --prefix=/usr               \
     --host=$VYASA_TGT           \

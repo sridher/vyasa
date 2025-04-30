@@ -41,11 +41,11 @@ VYASA=$(pwd)/rootfs
 VYASA_TGT=$(uname -m)-vyasa-linux-gnu
 
 export WS VYASA VYASA_TGT
-echo "--------------------------------" >> timings.txt
-echo ":: Timing :: package :: duration" > timings.txt
+echo "--------------------------------" > timings.txt
+echo ":: Timing :: package :: duration" >> timings.txt
 echo "----------- Toolchain ----------" >> timings.txt
 
-for pack in fhs init binutils gcc glibc check cpp;
+for pack in fhs init binutils gcc kernel-headers glibc check cpp;
 do
     echo $pack
     echo -e "\e[1;34m\nInstalling $pack ....\n\e[0m"

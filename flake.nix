@@ -32,6 +32,7 @@
 
         # Equivalent to  inputs'.nixpkgs.legacyPackages.hello;
         #packages.default = pkgs.hello;
+        #devShells.default = pkgs.mkShell {
         devShells.default = (pkgs.mkShell.override {stdenv = pkgs.gcc14Stdenv;}) {
           nativeBuildInputs = [
             pkgs.bc

@@ -7,6 +7,8 @@ set -e -u -o pipefail
 
 # gcc
 # ------------------------------
+# ❯ ./contrib/download_prerequisites
+# http://gcc.gnu.org/pub/gcc/infrastructure/isl-0.24.tar.bz2
 # ❯ ll vbuilds/gcc-14.2.0/{gettext-0.22.tar.gz,gmp-6.2.1.tar.bz2,isl-0.24.tar.bz2,mpc-1.2.1.tar.gz,mpfr-4.1.0.tar.bz2}
 cd $WS/builds
 tar -xf ../sources/gcc-14.2.0.tar.xz
@@ -19,6 +21,8 @@ tar -xf ../../sources/gmp-6.3.0.tar.xz
 mv -v gmp-6.3.0 gmp
 tar -xf ../../sources/mpc-1.2.1.tar.gz
 mv -v mpc-1.2.1 mpc
+tar -xf ../../sources/isl-0.24.tar.bz2
+mv -v isl-0.24 isl
 
 sed -e '/m64=/s/lib64/lib/' -i.orig gcc/config/i386/t-linux64
 
@@ -27,6 +31,12 @@ cd $WS/builds
 mkdir gcc-14.2.0/sbuild -p
 
 cd gcc-14.2.0/sbuild
+
+export CFLAGS="-Wno-error -Wno-error=implicit-function-declaration -Wno-error=format-security"
+export CXXFLAGS="-Wno-error -Wno-error=implicit-function-declaration -Wno-error=format-security"
+export CPPFLAGS="-Wno-error -Wno-error=implicit-function-declaration -Wno-error=format-security"
+#[-Werror=format-security]
+
 ../configure                    \
     --prefix=$VYASA/tools       \
     --with-sysroot=$VYASA       \

@@ -5,6 +5,7 @@ set -e -u -o pipefail
 # gcc
 # ------------------------------
 cd $WS/builds
+rm -rf gcc-14.2.0
 tar -xf ../sources/gcc-14.2.0.tar.xz
 
 cd gcc-14.2.0

@@ -11,6 +11,7 @@ set -e -u -o pipefail
 # http://gcc.gnu.org/pub/gcc/infrastructure/isl-0.24.tar.bz2
 # ❯ ll vbuilds/gcc-14.2.0/{gettext-0.22.tar.gz,gmp-6.2.1.tar.bz2,isl-0.24.tar.bz2,mpc-1.2.1.tar.gz,mpfr-4.1.0.tar.bz2}
 cd $WS/builds
+rm -rf gcc-14.2.0
 tar -xf ../sources/gcc-14.2.0.tar.xz
 
 cd gcc-14.2.0

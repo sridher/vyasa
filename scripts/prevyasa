@@ -88,5 +88,5 @@ TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 done
 
-echo -e "\e[1;33mTotal time took: $((TOTALTIME / 60)) minutes and $((TOTALTIME % 60)) seconds elapsed.\e[0m"
+echo -e "\e[1;36mTotal time took: $((TOTALTIME / 60)) minutes and $((TOTALTIME % 60)) seconds elapsed.\e[0m"
 exit 0

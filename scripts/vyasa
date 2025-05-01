@@ -189,6 +189,18 @@ make tinyconfig
 ./scripts/config --set-val CONFIG_E1000 y
 ./scripts/config --set-val CONFIG_INOTIFY_USER y
 
+# efi/uefi
+#EFI_STUB
+#EFI_PARTITION
+#EFIVAR_FS
+#VFAT_FS
+
+./scripts/config --set-val CONFIG_EFI y
+./scripts/config --set-val CONFIG_EFIVAR_FS y
+./scripts/config --set-val CONFIG_EFI_STUB y
+./scripts/config --set-val CONFIG_EFI_PARTITION y
+./scripts/config --set-val CONFIG_VFAT_FS y
+
 # QEMU q35
 ./scripts/config --set-val CONFIG_E1000E y
 ./scripts/config --set-val CONFIG_SCSI_TGT y
@@ -280,46 +292,82 @@ $RUNAS qemu-nbd --connect=/dev/nbd0 vyasa.qcow2
 sleep 5
 
 $RUNAS fdisk /dev/nbd0 <<EOF
+g
 n
-p
 1
 
++512M
+n
+2
 
-a
+
 w
 EOF
 $RUNAS fdisk -l /dev/nbd0
-lsblk -a | grep nbd0p1
+lsblk -a | grep nbd0
 #mknod /dev/nbd0p1 b 43 1
-$RUNAS mkfs.ext4 /dev/nbd0p1
+$RUNAS mkfs.ext4 /dev/nbd0p2
 
 mkdir $WS/disk -p
-$RUNAS mount /dev/nbd0p1 $WS/disk
+$RUNAS mount /dev/nbd0p2 $WS/disk
 
 $RUNAS cp -R $VYASA/* $WS/disk
 
+mkdir $WS/disk/boot/efi -p
+$RUNAS mkfs.fat -F 32 /dev/nbd0p1
+$RUNAS mount /dev/nbd0p1 $WS/disk/boot/efi/
 sync
 sync
-
-#efibootmgr
-#https://github.com/limine-bootloader/limine/tree/v9.2.3-binary
-#grub-efi
-#mount /dev/nbd0 /boot/efi/
-#$RUNAS grub-install --target=$(uname -m)-efi --efi-directory=$WS/disk --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/nbd0
 
 #grub
-$RUNAS grub-install --target=i386-pc --root-directory=$WS/disk --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/nbd0
-#grub-install --target=i386-pc --root-directory=$WS/disk --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/nbd0 --force
+#$RUNAS grub-install --target=i386-pc --root-directory=$WS/disk --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/nbd0
 
-#mkdir $WS/disk/boot/grub -p
+#grub-efi 
+#arm-efi, arm64-efi, i386-efi, ia64-efi, riscv32-efi, riscv64-efi, x86_64-efi
+#$RUNAS grub-install --target=$(uname -m)-efi --efi-directory=$WS/disk --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/nbd0
+$RUNAS grub-install --target=x86_64-efi --efi-directory=$WS/disk/boot/efi --boot-directory=$WS/disk/boot --no-floppy --bootloader-id="Vyasa" --modules="normal part_msdos ext2 multiboot" --recheck --verbose /dev/nbd0
+
+#grub-install: info: copying `/usr/lib/shim/shimx64.efi.signed' -> `/home/js/Work/vyasa-amd64/home/vyasa/disk/boot/efi/EFI/Vyasa/shimx64.efi'.
+#grub-install: info: copying `/usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed' -> `/home/js/Work/vyasa-amd64/home/vyasa/disk/boot/efi/EFI/Vyasa/grubx64.efi'.
+
+# x86 or arm
+#arch/x86/boot/bzImage bzImage.efi
+#Passing kernel parameters from the EFI shell
+#fs0:> bzImage.efi console=ttyS0 root=/dev/sda2
+$RUNAS cp $VYASA/boot/vyasa $WS/disk/boot/efi/EFI/Vyasa/vyasa.efi
+
+##efibootmgr
+#ROOT_UUID=$(blkid -s UUID -o value /dev/nbd0p2)
+##$RUNAS efibootmgr -c -d /dev/nbd0 -p 1 -L "Grub" -l '\EFI\Grub\grubx64.efi'
+##$RUNAS efibootmgr -c -d /dev/nbd0 -p 1 -L "Vyasa" -l '\EFI\Vyasa\bzImage.efi'
+#$RUNAS efibootmgr -c -d /dev/nbd0 -p 1 -L "Vyasa" --loader /boot/vyasa --unicode "root=$ROOT_UUID rw console=tty0 console=ttyS0"
+##efibootmgr -c -d /dev/nbd0 -p 1 -L "Vyasa" --loader /boot/vyasa --unicode 'root=#UUID or by-id## rw initrd=\initramfs-linux.img'
+##efibootmgr -c -d /dev/nbd0 -p 1 -L "Vyasa" --loader /vmlinuz-linux --unicode 'root=#BLOCK_IDENTIFIER## rw initrd=\initramfs-linux.img'
+##$RUNAS efibootmgr --create --disk /dev/nbd0 --part 1 --label "Vyasa Linux" --loader '\EFI\limine\BOOTX64.EFI' --unicode --verbose
+
+
+$RUNAS ls -lah $WS/disk/boot/efi
+$RUNAS efibootmgr -d /dev/nbd0 -v
+
+mkdir $WS/disk/boot/grub -p
 $RUNAS tee -a $WS/disk/boot/grub/grub.cfg > /dev/null <<EOF
+set default=0
+set timeout=5
+
+insmod part_gpt
+insmod ext2
+
+set prefix=(hd0,2)/boot/grub
+set root=(hd0,2)
+
+insmod normal
+insmod linux
+
 menuentry 'Vyasa' {
-    set root='(hd0,1)'
-    linux /boot/vyasa root=/dev/sda1 rw
+    linux /boot/vyasa root=/dev/sda2 rw
 }
 menuentry 'Vyasa (console)' {
-    set root='(hd0,1)'
-    linux /boot/vyasa root=/dev/sda1 rw console=tty0 console=ttyS0
+    linux /boot/vyasa root=/dev/sda2 rw console=tty0 console=ttyS0
 }
 
 EOF
@@ -327,7 +375,9 @@ EOF
 sync
 sync
 sync
-$RUNAS umount  $WS/disk
+$RUNAS umount $WS/disk/boot/efi
+$RUNAS umount $WS/disk
+
 $RUNAS qemu-nbd --disconnect /dev/nbd0
 sync
 sync
@@ -341,4 +391,5 @@ echo -e "\e[1;33mPost processing took: $((duration / 60)) minutes and $((duratio
 TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
 
+echo -e "\e[1;36mTotal time took: $((TOTALTIME / 60)) minutes and $((TOTALTIME % 60)) seconds elapsed.\e[0m"
 exit 0

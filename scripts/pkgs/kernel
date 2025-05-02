@@ -1,0 +1,143 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# Kernel
+# ------------------------------
+cd /builds
+tar -xf /sources/linux-6.14.4.tar.xz
+
+cd linux-6.14.4
+make distclean
+make tinyconfig
+
+# Kernel config
+
+#64BIT
+#BLOCK
+#BINFMT_ELF
+#BINFMT_SCRIPT
+#PRINTK
+#DEVTMPFS
+#DEVTMPFS_MOUNT
+#PCI
+#TTY
+#SERIAL_8250
+#SERIAL_8250_CONSOLE
+#BLK_DEV_SD
+#ATA
+#ATA_PIIX
+#EXT4_FS
+#PROC_FS
+#SYSFS
+
+./scripts/config --set-val CONFIG_64BIT y
+./scripts/config --set-val CONFIG_BLOCK y
+./scripts/config --set-val CONFIG_BINFMT_ELF y
+./scripts/config --set-val CONFIG_BINFMT_SCRIPT y
+./scripts/config --set-val CONFIG_PRINTK y
+./scripts/config --set-val CONFIG_DEVTMPFS y
+./scripts/config --set-val CONFIG_DEVTMPFS_MOUNT y
+./scripts/config --set-val CONFIG_PCI y
+./scripts/config --set-val CONFIG_TTY y
+./scripts/config --set-val CONFIG_SERIAL_8250 y
+./scripts/config --set-val CONFIG_SERIAL_8250_CONSOLE y
+./scripts/config --set-val CONFIG_BLK_DEV_SD y
+./scripts/config --set-val CONFIG_ATA y
+./scripts/config --set-val CONFIG_ATA_PIIX y
+./scripts/config --set-val CONFIG_EXT4_FS y
+./scripts/config --set-val CONFIG_PROC_FS y
+./scripts/config --set-val CONFIG_SYSFS y
+
+# Other options
+#./scripts/config --set-val CONFIG_TTY_PRINTK y
+./scripts/config --set-val CONFIG_EARLY_PRINTK y
+#./scripts/config --set-val CONFIG_VIRTIO_CONSOLE y
+#./scripts/config --set-val CONFIG_VT_HW_CONSOLE_BINDING y
+
+./scripts/config --set-val CONFIG_KEYS y
+./scripts/config --set-val CONFIG_EVENTFD y
+./scripts/config --set-val CONFIG_DNS_RESOLVER y
+./scripts/config --set-val CONFIG_POSIX_TIMERS y
+
+# File locking
+./scripts/config --set-val CONFIG_FILE_LOCKING y
+
+# Network
+#EXPERT
+#FUTEX
+#COMPAT_32BIT_TIME
+#NET
+#PACKET
+#UNIX
+#INET
+#NETDEVICES
+#ETHERNET
+#E1000
+#INOTIFY_USER
+
+./scripts/config --set-val CONFIG_EXPERT y
+./scripts/config --set-val CONFIG_FUTEX y
+./scripts/config --set-val CONFIG_COMPAT_32BIT_TIME y
+./scripts/config --set-val CONFIG_NET y
+./scripts/config --set-val CONFIG_PACKET y
+./scripts/config --set-val CONFIG_UNIX y
+./scripts/config --set-val CONFIG_INET y
+./scripts/config --set-val CONFIG_NETDEVICES y
+./scripts/config --set-val CONFIG_ETHERNET y
+./scripts/config --set-val CONFIG_E1000 y
+./scripts/config --set-val CONFIG_INOTIFY_USER y
+
+# efi/uefi
+#EFI_STUB
+#EFI_PARTITION
+#EFIVAR_FS
+#VFAT_FS
+
+./scripts/config --set-val CONFIG_EFI y
+./scripts/config --set-val CONFIG_EFIVAR_FS y
+./scripts/config --set-val CONFIG_EFI_STUB y
+./scripts/config --set-val CONFIG_EFI_PARTITION y
+./scripts/config --set-val CONFIG_VFAT_FS y
+
+# QEMU q35
+./scripts/config --set-val CONFIG_E1000E y
+./scripts/config --set-val CONFIG_SCSI_TGT y
+./scripts/config --set-val CONFIG_SATA_AHCI y
+./scripts/config --set-val CONFIG_SATA_AHCI_PLATFORM y
+#❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu EPYC -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+#❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu Skylake-Server -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+
+# QEMU virt
+#./scripts/config --set-val CONFIG_PCI y
+#./scripts/config --set-val CONFIG_VIRTIO_PCI y
+#./scripts/config --set-val CONFIG_PCI_HOST_GENERIC y
+# virtio-gpu-pci
+#./scripts/config --set-val CONFIG_DRM y
+#./scripts/config --set-val CONFIG_DRM_VIRTIO_GPU y
+
+#make defconfig
+#make oldconfig
+make olddefconfig
+
+mv .config vyasa-miniconfig 
+make allnoconfig KCONFIG_ALLCONFIG=vyasa-miniconfig
+cp .config vyasa-config 
+
+make -j$(nproc)
+
+case "$(uname -m)" in
+	aarch64) cp arch/arm64/boot/Image.gz /boot/vyasa
+	;;
+	loongarch64) cp arch/loong/boot/Image.gz /boot/vyasa
+	;;
+	riscv64) cp arch/riscv/boot/Image.gz /boot/vyasa
+	;;
+	x86_64) cp arch/x86/boot/bzImage /boot/vyasa
+        ;;
+	#2|3) echo 2 or 3
+	#;;
+	*) echo -e "\e[1;36mERROR: Architecture not supported yet.\e[0m"
+	;;
+esac
+# ------------------------------

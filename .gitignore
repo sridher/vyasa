@@ -81,6 +81,7 @@ toolchains
 vyasa-temp-tools.tar.xz
 vyasa.*.tar.xz
 vyasa.*.qcow2
+vyasa-*.qcow2
 vyasa.qcow2
 vyasa.img
 rootfs

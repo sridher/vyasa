@@ -25,8 +25,10 @@ RUNAS="" # "" or doas or sudo
 
 echo -e "\e[1;34mBuilding Vyasa linux....\e[0m"
 
-# Warmup admin
-$RUNAS echo -e "\e[1;36m$(uname -a)\e[0m"
+echo -e "\e[1;36m Architecture: $(uname -m)\e[0m"
+echo -e "\e[1;36m Triplet: $(gcc -dumpmachine)\e[0m"
+echo -e "\e[1;36m File: $(file /usr/bin/file)\e[0m"
+$RUNAS echo -e "\e[1;36m \n $(uname -a)\e[0m"
 
 # Cleanup
 SECONDS=0

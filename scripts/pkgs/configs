@@ -1,0 +1,46 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+# configs
+# ------------------------------
+# LD
+#echo -e "\e[1;32m$($VYASA/lib/libc.so $VYASA/usr/bin/uname -a)\e[0m"
+#ldconfig /usr/local/lib64/
+#openssl version -a
+#echo "/lib:/usr/local/lib:/usr/lib" > /etc/ld-musl-x86_64.path
+#$VYASA/bin/ld --help # check
+/bin/ld.so --help # check
+tee -a /etc/nsswitch.conf > /dev/null <<EOF
+# Begin /etc/nsswitch.conf
+passwd: files
+group: files
+shadow: files
+hosts: files dns
+networks: files
+protocols: files
+services: files
+ethers: files
+rpc: files
+# End /etc/nsswitch.conf
+EOF
+
+mkdir -pv /etc/ld.so.conf.d
+tee -a /etc/ld.so.config > /dev/null <<EOF
+/lib
+/lib64
+/usr/lib
+/usr/lib64
+/usr/local/lib
+/usr/local/lib64
+/opt/lib
+include /etc/ld.so.conf.d/*.conf
+EOF
+
+#❯ ldconfig # target machine
+# ldconfig -p # target machine
+# ldconfig -n /usr/lib64/libssl.so.3
+#❯ ldconfig -v -r -f etc/ld.so.config -C etc/ld.so.cache ./
+#❯ ldconfig -v -r -f /etc/ld.so.config -C /etc/ld.so.cache ./
+#/tmp # ldd /usr/bin/openssl
+# ------------------------------

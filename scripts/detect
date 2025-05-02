@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+[ $(id -u) -ne 0 ] && echo -e "\e[1;31mRun this as root.....\e[0m" && exit 1
+
+exec env -i HOME="$HOME" WS="/builds" VYASA="/" \
+	     HOME=/root                  \
+	     TERM="$TERM"                \
+	     PS1='\e[1;34m(vyasa chroot)\e[0m \u:\w\$ '\
+	     PATH=/usr/bin:/usr/sbin   \
+	     bwrap   \
+	     --dev-bind "$VYASA" /   \
+	     --dev /dev \
+	     --bind /sys /sys    \
+	     --bind /run /run    \
+	     --proc /proc        \
+	     --perms 1777 --tmpfs /dev/shm \
+	     --hostname vyasa    \
+	     --unshare-uts \
+	     --bind "$WS"/scripts /vyasa \
+	     --bind "$WS"/vbuilds /builds \
+	     --bind "$WS"/sources /sources \
+	     "$@"

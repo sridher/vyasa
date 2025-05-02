@@ -28,18 +28,47 @@ echo -e "\e[1;34mBuilding Vyasa linux....\e[0m"
 
 WS="$(pwd)"
 VYASA="$(pwd)"/rootfs
-VYASA_TGT=$(uname -m)-vyasa-linux-gnu
+#VYASA_TGT=$(uname -m)-vyasa-linux-gnu
 #VYASA_TGT=$(uname -m)-vyasa-linux-musl
+export WS VYASA
+
+# QEMU aarch64
+# QEMU loongarch64
+# QEMU riscv64
+# QEMU x86_64
+
+# Kernel arch
+ 
+# dpkg-architecture
+
+# binutils - https://sourceware.org/git/binutils-gdb bfd/cpu-*.c
+# gcc -dumpmachine
+
+# Linux	    QEMU    Debian	Binutils
+# alpha  arc  arm  arm64  csky  hexagon  loongarch  m68k  microblaze  mips  nios2  openrisc  parisc  powerpc  riscv  s390  sh  sparc  um  x86  xtensa
+# aarch64 alpha arm avr hexagon(*user) hppa i386 loongarch64 m68k microblaze microblazeel mips mips64 mips64el mipsel or1k ppc ppc64 riscv32 riscv64 rx s390x sh4 sh4eb sparc sparc64 tricore x86_64 x86_64(*microvm) xtensa xtensaeb 
+# alpha amd64 arm arm64 armel armhf avr32 hppa hurd-i386 i386 ia64 kfreebsd-amd64 kfreebsd-i386 loong64 m68k mips mips64el mipsel powerpc powerpcspe ppc64 ppc64el riscv64 s390 s390x sh4 sparc sparc64 x32
+# aarch64 alpha amdgcn arc arm avr bfin bpf cr16 cris crx csky d10v d30v dlx epiphany fr30 frv ft32 h8300 h8300.h hppa i386 ia64-opc ia64 iamcu ip2k iq2000 kvx lm32 loongarch m9s12x m32c m32r m68hc11 m68hc12 m68k m10200 m10300 m9s12xg mcore mep metag microblaze mips mmix moxie msp430 mt nds32 nfp ns32k or1k pdp11 pj powerpc pru riscv rl78 rs6000 rx s12z s390 score sh sparc spu tic4x tic6x tic30 tic54x tilegx tilepro v850 v850_rh850 vax visium wasm32 xgate xstormy16 xtensa z8k z80
+
+TGT=$(bash -e ./scripts/detect uname -m)
+HOST=$(bash -e ./scripts/detect uname -a)
+GCC=$(bash -e ./scripts/detect gcc -dumpmachine)
+FILE=$(bash -e ./scripts/detect file /usr/bin/file)
+VYASA_TGT=$TGT-vyasa-linux-gcc
+
+echo -e "\e[1;36m$HOST\e[0m"
+echo -e "\e[1;36m Architecture: $TGT\e[0m"
+echo -e "\e[1;36m Triplet: $GCC\e[0m"
+echo -e "\e[1;36m File: $FILE\e[0m"
+export VYASA_TGT
 
 # Warmup admin
-$RUNAS echo -e "\e[1;36m$(uname -a)\e[0m"
 $RUNAS chown -R root:root "$VYASA"/{usr,lib,lib64,var,etc,bin,sbin}
 
 # Cleanup
 SECONDS=0
 TOTALTIME=0
 
-export WS VYASA VYASA_TGT
 echo "--------------------------------" >> timings.txt
 echo ":: Timing :: package :: duration" >> timings.txt
 echo "------ Chroot Temp Tools -------" >> timings.txt
@@ -104,176 +133,23 @@ bash -e ./scripts/wrap /vyasa/chroot/cleanup
 #❯ sha vyasa-temp-tools.tar.xz
 
 # Kernel
-# ------------------------------
-cd $WS/builds
-tar -xf ../sources/linux-6.14.4.tar.xz
+echo "--------------------------------" >> timings.txt
+echo ":: Timing :: package :: duration" >> timings.txt
+echo "-----------  Kernel  -----------" >> timings.txt
 
-cd linux-6.14.4
-make distclean
-make tinyconfig
+for pack in kernel configs; 
+do
+    echo $pack
+    echo -e "\e[1;34m\nInstalling $pack ....\n\e[0m"
 
-# Kernel config
-
-#64BIT
-#BLOCK
-#BINFMT_ELF
-#BINFMT_SCRIPT
-#PRINTK
-#DEVTMPFS
-#DEVTMPFS_MOUNT
-#PCI
-#TTY
-#SERIAL_8250
-#SERIAL_8250_CONSOLE
-#BLK_DEV_SD
-#ATA
-#ATA_PIIX
-#EXT4_FS
-#PROC_FS
-#SYSFS
-
-./scripts/config --set-val CONFIG_64BIT y
-./scripts/config --set-val CONFIG_BLOCK y
-./scripts/config --set-val CONFIG_BINFMT_ELF y
-./scripts/config --set-val CONFIG_BINFMT_SCRIPT y
-./scripts/config --set-val CONFIG_PRINTK y
-./scripts/config --set-val CONFIG_DEVTMPFS y
-./scripts/config --set-val CONFIG_DEVTMPFS_MOUNT y
-./scripts/config --set-val CONFIG_PCI y
-./scripts/config --set-val CONFIG_TTY y
-./scripts/config --set-val CONFIG_SERIAL_8250 y
-./scripts/config --set-val CONFIG_SERIAL_8250_CONSOLE y
-./scripts/config --set-val CONFIG_BLK_DEV_SD y
-./scripts/config --set-val CONFIG_ATA y
-./scripts/config --set-val CONFIG_ATA_PIIX y
-./scripts/config --set-val CONFIG_EXT4_FS y
-./scripts/config --set-val CONFIG_PROC_FS y
-./scripts/config --set-val CONFIG_SYSFS y
-
-# Other options
-#./scripts/config --set-val CONFIG_TTY_PRINTK y
-./scripts/config --set-val CONFIG_EARLY_PRINTK y
-#./scripts/config --set-val CONFIG_VIRTIO_CONSOLE y
-#./scripts/config --set-val CONFIG_VT_HW_CONSOLE_BINDING y
-
-./scripts/config --set-val CONFIG_KEYS y
-./scripts/config --set-val CONFIG_EVENTFD y
-./scripts/config --set-val CONFIG_DNS_RESOLVER y
-./scripts/config --set-val CONFIG_POSIX_TIMERS y
-
-# File locking
-./scripts/config --set-val CONFIG_FILE_LOCKING y
-
-# Network
-#EXPERT
-#FUTEX
-#COMPAT_32BIT_TIME
-#NET
-#PACKET
-#UNIX
-#INET
-#NETDEVICES
-#ETHERNET
-#E1000
-#INOTIFY_USER
-
-./scripts/config --set-val CONFIG_EXPERT y
-./scripts/config --set-val CONFIG_FUTEX y
-./scripts/config --set-val CONFIG_COMPAT_32BIT_TIME y
-./scripts/config --set-val CONFIG_NET y
-./scripts/config --set-val CONFIG_PACKET y
-./scripts/config --set-val CONFIG_UNIX y
-./scripts/config --set-val CONFIG_INET y
-./scripts/config --set-val CONFIG_NETDEVICES y
-./scripts/config --set-val CONFIG_ETHERNET y
-./scripts/config --set-val CONFIG_E1000 y
-./scripts/config --set-val CONFIG_INOTIFY_USER y
-
-# efi/uefi
-#EFI_STUB
-#EFI_PARTITION
-#EFIVAR_FS
-#VFAT_FS
-
-./scripts/config --set-val CONFIG_EFI y
-./scripts/config --set-val CONFIG_EFIVAR_FS y
-./scripts/config --set-val CONFIG_EFI_STUB y
-./scripts/config --set-val CONFIG_EFI_PARTITION y
-./scripts/config --set-val CONFIG_VFAT_FS y
-
-# QEMU q35
-./scripts/config --set-val CONFIG_E1000E y
-./scripts/config --set-val CONFIG_SCSI_TGT y
-./scripts/config --set-val CONFIG_SATA_AHCI y
-./scripts/config --set-val CONFIG_SATA_AHCI_PLATFORM y
-#❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu EPYC -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
-#❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu Skylake-Server -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
-
-# QEMU virt
-#./scripts/config --set-val CONFIG_PCI y
-#./scripts/config --set-val CONFIG_VIRTIO_PCI y
-#./scripts/config --set-val CONFIG_PCI_HOST_GENERIC y
-# virtio-gpu-pci
-#./scripts/config --set-val CONFIG_DRM y
-#./scripts/config --set-val CONFIG_DRM_VIRTIO_GPU y
-
-#make defconfig
-#make oldconfig
-make olddefconfig
-
-mv .config vyasa-miniconfig 
-make allnoconfig KCONFIG_ALLCONFIG=vyasa-miniconfig
-cp .config vyasa-config 
-
-make -j$(nproc)
-cp arch/x86/boot/bzImage $VYASA/boot/vyasa
-cd $WS
-
+    bash -e ./scripts/wrap /vyasa/pkgs/$pack
+    
 duration=$SECONDS
-echo -e "\e[1;33mKernel compile took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+echo -e "\e[1;33m$pack took: $((duration / 60)) minutes and $((duration % 60)) seconds elapsed.\e[0m"
+echo ":: $duration :: $pack :: took $((duration / 60)) minutes and $((duration % 60)) seconds." >> timings.txt
 TOTALTIME=$((TOTALTIME + duration))
 SECONDS=0
-
-
-# LD
-#echo -e "\e[1;32m$($VYASA/lib/libc.so $VYASA/usr/bin/uname -a)\e[0m"
-#ldconfig /usr/local/lib64/
-#openssl version -a
-#echo "/lib:/usr/local/lib:/usr/lib" > /etc/ld-musl-x86_64.path
-#$VYASA/bin/ld --help # check
-$VYASA/bin/ld.so --help # check
-$RUNAS tee -a $VYASA/etc/nsswitch.conf > /dev/null <<EOF
-# Begin /etc/nsswitch.conf
-passwd: files
-group: files
-shadow: files
-hosts: files dns
-networks: files
-protocols: files
-services: files
-ethers: files
-rpc: files
-# End /etc/nsswitch.conf
-EOF
-
-$RUNAS mkdir -pv $VYASA/etc/ld.so.conf.d
-$RUNAS tee -a $VYASA/etc/ld.so.config > /dev/null <<EOF
-/lib
-/lib64
-/usr/lib
-/usr/lib64
-/usr/local/lib
-/usr/local/lib64
-/opt/lib
-include /etc/ld.so.conf.d/*.conf
-EOF
-
-#❯ ldconfig # target machine
-# ldconfig -p # target machine
-# ldconfig -n /usr/lib64/libssl.so.3
-#❯ ldconfig -v -r -f etc/ld.so.config -C etc/ld.so.cache ./
-#❯ ldconfig -v -r -f /etc/ld.so.config -C /etc/ld.so.cache ./
-#/tmp # ldd /usr/bin/openssl
+done
 
 # fdisk
 cd $WS
@@ -325,7 +201,21 @@ sync
 #grub-efi 
 #arm-efi, arm64-efi, i386-efi, ia64-efi, riscv32-efi, riscv64-efi, x86_64-efi
 #$RUNAS grub-install --target=$(uname -m)-efi --efi-directory=$WS/disk --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/nbd0
-$RUNAS grub-install --target=x86_64-efi --efi-directory=$WS/disk/boot/efi --boot-directory=$WS/disk/boot --no-floppy --bootloader-id="Vyasa" --modules="normal part_msdos ext2 multiboot" --recheck --verbose /dev/nbd0
+
+case "$(uname -m)" in
+	aarch64) $RUNAS grub-install -d ../../usr/lib/grub/arm64-efi --target=arm64-efi --efi-directory=$WS/disk/boot/efi --boot-directory=$WS/disk/boot --no-floppy --bootloader-id="Vyasa" --modules="normal part_msdos ext2" --recheck --verbose /dev/nbd0
+	;;
+	loongarch64) $RUNAS grub-install -d ../../usr/lib/grub/loongarch64-efi --target=loongarch64-efi --efi-directory=$WS/disk/boot/efi --boot-directory=$WS/disk/boot --no-floppy --bootloader-id="Vyasa" --modules="normal part_msdos ext2" --recheck --verbose /dev/nbd0
+	;;
+	riscv64) $RUNAS grub-install -d ../../usr/lib/grub/riscv64-efi --target=riscv64-efi --efi-directory=$WS/disk/boot/efi --boot-directory=$WS/disk/boot --no-floppy --bootloader-id="Vyasa" --modules="normal part_msdos ext2" --recheck --verbose /dev/nbd0
+	;;
+	x86_64) $RUNAS grub-install -d ../../usr/lib/grub/x86_64-efi --target=x86_64-efi --efi-directory=$WS/disk/boot/efi --boot-directory=$WS/disk/boot --no-floppy --bootloader-id="Vyasa" --modules="normal part_msdos ext2" --recheck --verbose /dev/nbd0
+	;;
+	#2|3) echo 2 or 3
+	#;;
+	*) echo -e "\e[1;36mERROR: Architecture not supported for bootloader.\e[0m"
+	;;
+esac
 
 #grub-install: info: copying `/usr/lib/shim/shimx64.efi.signed' -> `/home/js/Work/vyasa-amd64/home/vyasa/disk/boot/efi/EFI/Vyasa/shimx64.efi'.
 #grub-install: info: copying `/usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed' -> `/home/js/Work/vyasa-amd64/home/vyasa/disk/boot/efi/EFI/Vyasa/grubx64.efi'.
@@ -334,7 +224,7 @@ $RUNAS grub-install --target=x86_64-efi --efi-directory=$WS/disk/boot/efi --boot
 #arch/x86/boot/bzImage bzImage.efi
 #Passing kernel parameters from the EFI shell
 #fs0:> bzImage.efi console=ttyS0 root=/dev/sda2
-$RUNAS cp $VYASA/boot/vyasa $WS/disk/boot/efi/EFI/Vyasa/vyasa.efi
+#$RUNAS cp $VYASA/boot/vyasa $WS/disk/boot/efi/EFI/Vyasa/vyasa.efi
 
 ##efibootmgr
 #ROOT_UUID=$(blkid -s UUID -o value /dev/nbd0p2)
@@ -345,8 +235,6 @@ $RUNAS cp $VYASA/boot/vyasa $WS/disk/boot/efi/EFI/Vyasa/vyasa.efi
 ##efibootmgr -c -d /dev/nbd0 -p 1 -L "Vyasa" --loader /vmlinuz-linux --unicode 'root=#BLOCK_IDENTIFIER## rw initrd=\initramfs-linux.img'
 ##$RUNAS efibootmgr --create --disk /dev/nbd0 --part 1 --label "Vyasa Linux" --loader '\EFI\limine\BOOTX64.EFI' --unicode --verbose
 
-
-$RUNAS ls -lah $WS/disk/boot/efi
 $RUNAS efibootmgr -d /dev/nbd0 -v
 
 mkdir $WS/disk/boot/grub -p

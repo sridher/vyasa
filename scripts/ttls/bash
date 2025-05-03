@@ -21,5 +21,6 @@ make -j$(nproc)
 
 make DESTDIR=$VYASA install
 ln -sv bash $VYASA/bin/sh
+cd .. && package $(basename `pwd`)
 # ------------------------------
 

@@ -16,5 +16,6 @@ cd patch-2.7.6/build
 make -j$(nproc)
 
 make DESTDIR=$VYASA install
+cd .. && package $(basename `pwd`)
 # ------------------------------
 

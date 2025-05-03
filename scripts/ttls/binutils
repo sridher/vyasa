@@ -31,5 +31,6 @@ make -j$(nproc)
 make DESTDIR=$VYASA install # nixos  HACK: for /usr/local/lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
 #CFLAGS="-U_FORTIFY_SOURCE -O2 -fno-stack-protector" make -j$(nproc)
 rm -vf $VYASA/usr/lib/lib{bfd,ctf,ctf-nobfd,opcodes,sframe}.{a,la}
+cd .. && package $(basename `pwd`)
 # ------------------------------
 

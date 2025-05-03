@@ -108,4 +108,6 @@ https://github.com/limine-bootloader/limine/raw/refs/tags/v9.2.3-binary/BOOTIA32
 https://github.com/limine-bootloader/limine/raw/refs/tags/v9.2.3-binary/BOOTLOONGARCH64.EFI
 https://github.com/limine-bootloader/limine/raw/refs/tags/v9.2.3-binary/BOOTRISCV64.EFI
 https://github.com/limine-bootloader/limine/raw/refs/tags/v9.2.3-binary/BOOTX64.EFI
+https://git.savannah.gnu.org/cgit/config.git/plain/config.guess
+https://git.savannah.gnu.org/cgit/config.git/plain/config.sub
 https://curl.haxx.se/ca/cacert.pem

@@ -7,6 +7,10 @@ set -e -u -o pipefail
 cd /builds
 rm -rf flex-2.6.4
 tar -xf /sources/flex-2.6.4.tar.gz
+
+cp /sources/config.guess flex-2.6.4/build-aux/
+cp /sources/config.sub flex-2.6.4/build-aux/
+
 mkdir flex-2.6.4/build -p
 cd flex-2.6.4/build
 
@@ -16,4 +20,5 @@ cd flex-2.6.4/build
 
 make -j$(nproc)
 make install
+cd .. && package $(basename `pwd`)
 # ------------------------------

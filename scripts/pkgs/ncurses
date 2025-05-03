@@ -27,4 +27,5 @@ make -j$(nproc)
 
 make install
 ln -sfv libncursesw.so /usr/lib/libncurses.so
+cd .. && package $(basename `pwd`)
 # ------------------------------

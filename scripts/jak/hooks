@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+set -e -u -o pipefail
+
+#steps 
+#function_name () { commands; }
+
+prepare: Preparation of the package build. The hook 'prepare' is evaluated as one of the first actions when a package build is started.
+
+prepatch: One of the first things the build system does, is the extraction and patching of the package archive files. Before applying the patches the hook 'prepatch' is evaluated.
+
+postpatch: The hook 'postpatch' is evaluated after applying the patches.
+
+postdoc: The build system features an automatic copy operation of most useful documentation files, like the packages README, LICENSE, AUTHORS, and so on. The hook 'postdoc' is evaluated after this operation.
+
+preconf: Most packages need a configuration process - for example running the GNU/autoconf script. Before running the detected configure with auto-detected options the hook 'preconf' is evaluated.
+
+premake: Before running make the hook 'premake' is evaluated.
+
+inmake: Between running 'make' and 'make install' the hook 'inmake' is valuated.
+
+postmake: After running 'make install' the hook 'postmake' is evaluated.
+
+postinstall: After the whole normal build process and before the final file list creation the hook 'postinstall' is evaluated.
+
+postflist: After the file list creation for the package the hook 'postflist' is evaluated.
+
+finish: As last step in the package build - after all the /var/adm/* meta-data creation - the hook 'finish' is evaluated. This is usually used to do run some management code, for example the ccache support prints some pretty statistics at this time.
+
+
+hook_add hook-name priority command
+hook_add postmake 5 "cp -vrf tools $docdir"

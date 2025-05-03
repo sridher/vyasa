@@ -13,4 +13,5 @@ cd iproute2-6.13.0
 
 make -j$(nproc)
 make install
+cd .. && package $(basename `pwd`)
 # ------------------------------

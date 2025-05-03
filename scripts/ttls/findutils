@@ -16,5 +16,6 @@ cd findutils-4.10.0/build
 make -j$(nproc)
 
 make DESTDIR=$VYASA install
+cd .. && package $(basename `pwd`)
 # ------------------------------
 

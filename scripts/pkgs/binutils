@@ -23,4 +23,5 @@ cd binutils-2.44/build
 
 make tooldir=/usr -j$(nproc)
 make tooldir=/usr install
+cd .. && package $(basename `pwd`)
 # ------------------------------

@@ -8,10 +8,11 @@ echo "$@"
 [ $(id -u) -ne 0 ] && echo -e "\e[1;31mRun this as root.....\e[0m" && exit 1
 
 echo "WS: ${WS:?}"
+echo "JAK: ${JAK:?}"
 echo "VYASA: ${VYASA:?}"
 echo "VYASA_TGT: ${VYASA_TGT:?}"
 
-exec env -i HOME="$HOME" WS="/builds" VYASA="/" VYASA_TGT="$VYASA_TGT" \
+exec env -i HOME="$HOME" WS="/builds" JAK="$JAK" VYASA="/" VYASA_TGT="$VYASA_TGT" \
 	     HOME=/root                  \
 	     TERM="$TERM"                \
 	     PS1='\e[1;34m(vyasa chroot)\e[0m \u:\w\$ '\

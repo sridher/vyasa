@@ -27,5 +27,6 @@ make FILE_COMPILE=$(pwd)/../tuild/src/file -j$(nproc)
 make DESTDIR=$VYASA install
 
 rm -vf $VYASA/usr/lib/libmagic.la
+cd .. && package $(basename `pwd`)
 # ------------------------------
 

@@ -17,5 +17,6 @@ cd make-4.4.1/build
 make -j$(nproc)
 
 make DESTDIR=$VYASA install
+cd .. && package $(basename `pwd`)
 # ------------------------------
 

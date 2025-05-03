@@ -14,5 +14,6 @@ cd gzip-1.13/build
 make -j$(nproc)
 
 make DESTDIR=$VYASA install
+cd .. && package $(basename `pwd`)
 # ------------------------------
 

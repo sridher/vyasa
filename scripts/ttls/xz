@@ -18,5 +18,6 @@ make -j$(nproc)
 
 make DESTDIR=$VYASA install
 rm -vf $VYASA/usr/lib/liblzma.la
+cd .. && package $(basename `pwd`)
 # ------------------------------
 

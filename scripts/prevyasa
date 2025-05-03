@@ -70,8 +70,26 @@ PATH=$PATH:$VYASA/usr/bin:$VYASA/tools/bin
 #CC="$TOOL"gcc
 #CXX="$TOOL"g++
 #MAKE=$(which make)
+TGT=$(uname -m)
 
 export WS VYASA VYASA_TGT PATH
+
+JAK="$(pwd)"/pkgs # Binary Packages
+JAKS="$(pwd)"/sources # Sources
+JAKT="$(pwd)"/builds # HOST Tools
+JAKX="$(pwd)"/vbuilds # chroot or cross or Xbuild builds
+export JAK JAKS JAKT JAKX
+
+package () {
+  cd build
+  mkdir $JAK/$TGT/p/ -p
+  make DESTDIR="$JAK/$1" install
+  #make DESTDIR="$JAK/$1" PREFIX=/usr install
+  tar --sort=name --mtime="@0" --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime,delete=btime,delete=mtime -cJpf "$JAK/$TGT/p/$1.jak.tar.xz" "$JAK/$1"
+}
+
+export -f package
+
 echo "--------------------------------" >> timings.txt
 echo ":: Timing :: package :: duration" >> timings.txt
 echo "---------- Temp Tools ----------" >> timings.txt

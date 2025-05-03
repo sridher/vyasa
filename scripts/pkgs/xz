@@ -16,4 +16,5 @@ cd xz-5.6.4/build
 
 make -j$(nproc)
 make install
+cd .. && package $(basename `pwd`)
 # ------------------------------

@@ -170,12 +170,18 @@ cp .config vyasa-config
 
 make -j$(nproc)
 
+#sudo cp vbuilds/linux-6.14.4/arch/riscv/boot/Image.xz rootfs/boot/vyasa
 case "$(uname -m)" in
-	aarch64) cp arch/arm64/boot/Image.gz /boot/vyasa
+	aarch64) 
+	  cp arch/arm64/boot/Image.gz /boot/vyasa
+	  echo "NOTE: Works on defconfig with crash"
+	  echo "NOTE: required kernel options to be enabled "
 	;;
 	loongarch64) cp arch/loong/boot/Image.gz /boot/vyasa
 	;;
-	riscv64) cp arch/riscv/boot/Image.gz /boot/vyasa
+	riscv64) 
+	  cp arch/riscv/boot/Image.xz /boot/vyasa
+	  echo "NOTE: required kernel options to be enabled "
 	;;
 	x86_64) cp arch/x86/boot/bzImage /boot/vyasa
         ;;

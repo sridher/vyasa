@@ -55,5 +55,6 @@ ln -sv gcc $VYASA/usr/bin/cc
 
 #❯ echo 'int main(){}' | $VYASA/tools/bin/$VYASA_TGT-gcc -xc -
 #❯ echo 'int main(){}' | $VYASA/tools/bin/$VYASA_TGT-gcc -xc++ --sysroot=$VYASA -
+cd .. && package $(basename `pwd`)
 # ------------------------------
 

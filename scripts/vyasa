@@ -62,6 +62,22 @@ echo -e "\e[1;36m Triplet: $GCC\e[0m"
 echo -e "\e[1;36m File: $FILE\e[0m"
 export VYASA_TGT
 
+JAK="$(pwd)"/pkgs # Binary Packages
+JAKS="$(pwd)"/sources # Sources
+JAKT="$(pwd)"/builds # HOST Tools
+JAKX="$(pwd)"/vbuilds # chroot or cross or Xbuild builds
+export JAK JAKS JAKT JAKX
+
+package () {
+  cd build
+  mkdir $JAK/$TGT/p/ -p
+  make DESTDIR="$JAK/$1" install
+  #make DESTDIR="$JAK/$1" PREFIX=/usr install
+  tar --sort=name --mtime="@0" --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime,delete=btime,delete=mtime -cJpf "$JAK/$TGT/$1.jak.tar.xz" "$JAK/$1"
+}
+
+export -f package
+
 # Warmup admin
 $RUNAS chown -R root:root "$VYASA"/{usr,lib,lib64,var,etc,bin,sbin}
 
@@ -232,10 +248,10 @@ esac
 #fs0:> bzImage.efi console=ttyS0 root=/dev/sda2
 #cp $VYASA/boot/{vmlinuz,initrd.img} /boot/efi/
 
-##efibootmgr
-cp $VYASA/boot/vyasa $WS/disk/boot/efi/EFI/Vyasa/Vyasa.efi
-$RUNAS bwrap --dev-bind "../../" / --dev /dev --dev-bind /dev/nbd0 /dev/nbd0 --dev-bind /dev/nbd0p1 /dev/nbd0p1  --dev-bind /dev/nbd0p2 /dev/nbd0p2 --bind /sys /sys --bind /run /run --proc /proc --perms 1777 --tmpfs /dev/shm efibootmgr -c -d /dev/nbd0 -p 1 -L "Vyasa" -l EFI/Vyasa/Vyasa.efi --unicode "root=UUID=$ROOT_UUID rw console=tty0 console=ttyS0"
-$RUNAS bwrap --dev-bind "../../" / --dev /dev --dev-bind /dev/nbd0 /dev/nbd0 --dev-bind /dev/nbd0p1 /dev/nbd0p1  --dev-bind /dev/nbd0p2 /dev/nbd0p2 --bind /sys /sys --bind /run /run --proc /proc --perms 1777 --tmpfs /dev/shm efibootmgr -d /dev/nbd0 -v
+###efibootmgr
+#cp $VYASA/boot/vyasa $WS/disk/boot/efi/EFI/Vyasa/Vyasa.efi
+#$RUNAS bwrap --dev-bind "../../" / --dev /dev --dev-bind /dev/nbd0 /dev/nbd0 --dev-bind /dev/nbd0p1 /dev/nbd0p1  --dev-bind /dev/nbd0p2 /dev/nbd0p2 --bind /sys /sys --bind /run /run --proc /proc --perms 1777 --tmpfs /dev/shm efibootmgr -c -d /dev/nbd0 -p 1 -L "Vyasa" -l EFI/Vyasa/Vyasa.efi --unicode "root=UUID=$ROOT_UUID rw console=tty0 console=ttyS0"
+#$RUNAS bwrap --dev-bind "../../" / --dev /dev --dev-bind /dev/nbd0 /dev/nbd0 --dev-bind /dev/nbd0p1 /dev/nbd0p1  --dev-bind /dev/nbd0p2 /dev/nbd0p2 --bind /sys /sys --bind /run /run --proc /proc --perms 1777 --tmpfs /dev/shm efibootmgr -d /dev/nbd0 -v
 
 ##$RUNAS efibootmgr -c -d /dev/nbd0 -p 1 -L "Grub" -l '\EFI\Grub\grubx64.efi'
 ##$RUNAS efibootmgr -c -d /dev/nbd0 -p 1 -L "Vyasa" -l '\EFI\Vyasa\bzImage.efi'

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -e -u -o pipefail
+
+cmd (CMD): a generic command wrapper
+
+cc (CC): C compiler wrapper
+
+c++ (CXX): C++ compiler wrapper
+
+kcc (KCC): Kernel C compiler wrapper
+
+f77 (F77): Fortran 77 compiler wrapper
+
+rust (RUST): Rust compiler wrapper
+
+strip (STRIP): configuration for strip wrapper
+
+zig (ZIG): Zig compiler wrapper
+
+install, cp, ln, move (INSTALL): file installation wrapper

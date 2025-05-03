@@ -20,4 +20,5 @@ make -j$(nproc)
 sed -i '/INSTALL_LIBS/s/libcrypto.a libssl.a//' Makefile
 
 make MANSUFFIX=ssl install
+cd .. && package $(basename `pwd`)
 # ------------------------------

@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+set -e -u -o pipefail
+
+MAKE_OPTS=$(nproc)
+
+# Architecture map
+
+# QEMU aarch64
+# QEMU loongarch64
+# QEMU riscv64
+# QEMU x86_64
+
+# Kernel arch
+ 
+# dpkg-architecture
+
+# binutils - https://sourceware.org/git/binutils-gdb bfd/cpu-*.c
+# gcc -dumpmachine
+
+# Linux	    QEMU    Debian	Binutils
+# alpha  arc  arm  arm64  csky  hexagon  loongarch  m68k  microblaze  mips  nios2  openrisc  parisc  powerpc  riscv  s390  sh  sparc  um  x86  xtensa
+# aarch64 alpha arm avr hexagon(*user) hppa i386 loongarch64 m68k microblaze microblazeel mips mips64 mips64el mipsel or1k ppc ppc64 riscv32 riscv64 rx s390x sh4 sh4eb sparc sparc64 tricore x86_64 x86_64(*microvm) xtensa xtensaeb 
+# alpha amd64 arm arm64 armel armhf avr32 hppa hurd-i386 i386 ia64 kfreebsd-amd64 kfreebsd-i386 loong64 m68k mips mips64el mipsel powerpc powerpcspe ppc64 ppc64el riscv64 s390 s390x sh4 sparc sparc64 x32
+# aarch64 alpha amdgcn arc arm avr bfin bpf cr16 cris crx csky d10v d30v dlx epiphany fr30 frv ft32 h8300 h8300.h hppa i386 ia64-opc ia64 iamcu ip2k iq2000 kvx lm32 loongarch m9s12x m32c m32r m68hc11 m68hc12 m68k m10200 m10300 m9s12xg mcore mep metag microblaze mips mmix moxie msp430 mt nds32 nfp ns32k or1k pdp11 pj powerpc pru riscv rl78 rs6000 rx s12z s390 score sh sparc spu tic4x tic6x tic30 tic54x tilegx tilepro v850 v850_rh850 vax visium wasm32 xgate xstormy16 xtensa z8k z80
+
+BASE=x86_64
+
+case "$(uname -m)" in
+	aarch64) 
+          BASE=armv9-a
+          #armv7 armv7-a armv7ve armv8-a armv8.1-a armv8.2-a armv8.3-a armv8.4-a armv8.5-a armv8.6-a armv9-a
+	;;
+	loongarch64) 
+          BASE=loongarch64
+          #loongarch64 la464 la664 la64v1.0 la641.1
+	;;
+	riscv64) 
+          BASE=rv64g
+          #rv32 or rv64 followed by `i`, `e`, `g`
+	;;
+	x86_64) 
+          BASE=x86_64
+          #x86-64 x86-64-v2 x86-64-v3 x86-64-v4
+          #corei7 broadwell skylake cannonlake icelake rocketlake cascadelake tigerlake
+          #znver1 znver2 znver3 znver4 znver5
+        ;;
+	*) echo -e "\e[1;36mERROR: Architecture not supported yet.\e[0m"
+	;;
+esac
+# ------------------------------
+

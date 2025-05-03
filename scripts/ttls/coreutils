@@ -18,5 +18,6 @@ export FORCE_UNSAFE_CONFIGURE=1 # error: you should not run configure as root
 make -j$(nproc)
 
 make DESTDIR=$VYASA install
+cd .. && package $(basename `pwd`)
 # ------------------------------
 

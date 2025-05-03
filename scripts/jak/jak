@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+set -e -u -o pipefail
+
+#steps 
+#function_name () { commands; }
+
+#prepare: Command to be executed before the main build-block.
+prepare () { echo ''; }
+
+#prepatch: Command to be executed before the automatic patching.
+prepatch () { echo ''; }
+
+#postpatch: Command to be executed after the automatic patching.
+postpatch () { echo ''; }
+
+#postdoc: Command to be executed after the automatic document copy process.
+postdoc () { echo ''; }
+
+#preconf: Command to be executed before running configure.
+preconf () { echo ''; }
+
+#premake: Command to be execute before running 'make'.
+premake () { echo ''; }
+
+#inmake: Command to be execute between 'make' and 'make install'.
+inmake () { echo ''; }
+
+#postmake: Command to be execute after running 'make install'.
+postmake () { echo ''; }
+
+#postflist: Command to be execute after creating the flist.
+postflist () { echo ''; }
+
+#postinstall: Command to be execute after finishing all the standard stuff.
+postinstall () { echo ''; }
+
+#finish: Command to be execute after everything else outside build-block.
+finish () { echo ''; }
+
+#custmain: Command to execute instead of 'configure, make, make install'.
+custmain () { echo ''; }
+
+#mainfunction: Alternate main function instead of build_this_package().
+mainfunction () { echo ''; }
+

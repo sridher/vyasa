@@ -5,6 +5,7 @@ set -e -u -o pipefail
 # Kernel
 # ------------------------------
 cd /builds
+rm -rf linux-6.14.4
 tar -xf /sources/linux-6.14.4.tar.xz
 
 cd linux-6.14.4
@@ -88,6 +89,27 @@ make tinyconfig
 ./scripts/config --set-val CONFIG_E1000 y
 ./scripts/config --set-val CONFIG_INOTIFY_USER y
 
+# QEMU q35
+./scripts/config --set-val CONFIG_E1000E y
+./scripts/config --set-val CONFIG_SCSI_TGT y
+./scripts/config --set-val CONFIG_SATA_AHCI y
+./scripts/config --set-val CONFIG_SATA_AHCI_PLATFORM y
+#❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu EPYC -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+#❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu Skylake-Server -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+
+# QEMU virt
+./scripts/config --set-val CONFIG_PCI y
+./scripts/config --set-val CONFIG_VIRTIO_PCI y
+./scripts/config --set-val CONFIG_PCI_HOST_GENERIC y
+# virtio-gpu-pci
+#./scripts/config --set-val CONFIG_DRM y
+#./scripts/config --set-val CONFIG_DRM_VIRTIO_GPU y
+./scripts/config --set-val CONFIG_VIRTIO_MENU y
+./scripts/config --set-val CONFIG_VIRTIO_NET y
+./scripts/config --set-val CONFIG_VIRTIO_BLK y
+./scripts/config --set-val CONFIG_VIRTIO_PCI y
+./scripts/config --set-val CONFIG_VIRTIO_MMIO y 
+
 # efi/uefi
 #EFI_STUB
 #EFI_PARTITION
@@ -100,21 +122,43 @@ make tinyconfig
 ./scripts/config --set-val CONFIG_EFI_PARTITION y
 ./scripts/config --set-val CONFIG_VFAT_FS y
 
-# QEMU q35
-./scripts/config --set-val CONFIG_E1000E y
-./scripts/config --set-val CONFIG_SCSI_TGT y
-./scripts/config --set-val CONFIG_SATA_AHCI y
-./scripts/config --set-val CONFIG_SATA_AHCI_PLATFORM y
-#❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu EPYC -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
-#❯ qemu-system-x86_64 -machine q35,accel=kvm -cpu Skylake-Server -m 4G vyasa.qcow2 -nographic -serial mon:stdio --no-reboot
+case "$(uname -m)" in
+	aarch64)
+	  ./scripts/config --set-val CONFIG_ATA y
+	  ./scripts/config --set-val CONFIG_ATA_SFF y
+	  ./scripts/config --set-val CONFIG_ATA_BMDMA y
+	  ./scripts/config --set-val CONFIG_ATA_GENERIC y
 
-# QEMU virt
-#./scripts/config --set-val CONFIG_PCI y
-#./scripts/config --set-val CONFIG_VIRTIO_PCI y
-#./scripts/config --set-val CONFIG_PCI_HOST_GENERIC y
-# virtio-gpu-pci
-#./scripts/config --set-val CONFIG_DRM y
-#./scripts/config --set-val CONFIG_DRM_VIRTIO_GPU y
+	  ./scripts/config --set-val CONFIG_ARM_THUMB y
+	  ./scripts/config --set-val CONFIG_ARM_CPUIDLE y
+	  ./scripts/config --set-val CONFIG_ARM_LPAE y
+	  ./scripts/config --set-val CONFIG_ARCH_MULTI_V7 y
+	  ./scripts/config --set-val CONFIG_ARCH_OMAP2PLUS_TYPICAL y
+	  ./scripts/config --set-val CONFIG_ARCH_VIRT y
+	  ./scripts/config --set-val CONFIG_ARCH_ALPINE y
+	  ./scripts/config --set-val CONFIG_MMU y
+	  ./scripts/config --set-val CONFIG_SOC_DRA7XX y
+	  ./scripts/config --set-val CONFIG_VDSO y
+	  ./scripts/config --set-val CONFIG_CPU_IDLE y
+	  ./scripts/config --set-val CONFIG_KERNEL_MODE_NEON y
+	  ./scripts/config --set-val CONFIG_SERIAL_AMBA_PL011 y
+	  ./scripts/config --set-val CONFIG_SERIAL_AMBA_PL011_CONSOLE y
+	  ./scripts/config --set-val CONFIG_RTC_CLASS y
+	  ./scripts/config --set-val CONFIG_RTC_HCTOSYS y
+	  ./scripts/config --set-val CONFIG_RTC_DRV_PL031 y 
+	  ./scripts/config --set-val CONFIG_PATA_PLATFORM y
+	  ./scripts/config --set-val CONFIG_PATA_OF_PLATFORM y 
+	;;
+	loongarch64) echo -e "\e[1;36m: defaults.\e[0m"
+	;;
+	riscv64) echo -e "\e[1;36m: defaults.\e[0m"
+	;;
+	x86_64) echo -e "\e[1;36m: defaults.\e[0m"
+        ;;
+	*) echo -e "\e[1;36m: defaults.\e[0m"
+	;;
+esac
+
 
 #make defconfig
 #make oldconfig
@@ -135,8 +179,6 @@ case "$(uname -m)" in
 	;;
 	x86_64) cp arch/x86/boot/bzImage /boot/vyasa
         ;;
-	#2|3) echo 2 or 3
-	#;;
 	*) echo -e "\e[1;36mERROR: Architecture not supported yet.\e[0m"
 	;;
 esac

@@ -202,14 +202,20 @@ sync
 #arm-efi, arm64-efi, i386-efi, ia64-efi, riscv32-efi, riscv64-efi, x86_64-efi
 #$RUNAS grub-install --target=$(uname -m)-efi --efi-directory=$WS/disk --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/nbd0
 
-case "$(uname -m)" in
-	aarch64) $RUNAS grub-install -d ../../usr/lib/grub/arm64-efi --target=arm64-efi --efi-directory=$WS/disk/boot/efi --boot-directory=$WS/disk/boot --no-floppy --bootloader-id="Vyasa" --modules="normal part_msdos ext2" --recheck --verbose /dev/nbd0
+ROOT_UUID=$(blkid -s UUID -o value /dev/nbd0p2)
+case "$TGT" in
+	aarch64)
+	    $RUNAS bwrap --dev-bind "../../" / --dev /dev --dev-bind /dev/nbd0 /dev/nbd0 --dev-bind /dev/nbd0p1 /dev/nbd0p1  --dev-bind /dev/nbd0p2 /dev/nbd0p2 --bind /sys /sys --bind /run /run --proc /proc --perms 1777 --tmpfs /dev/shm /sbin/grub-install --target=arm64-efi --efi-directory=/home/vyasa/disk/boot/efi --boot-directory=/home/vyasa/disk/boot --no-floppy --bootloader-id="Vyasa" --modules="normal part_msdos ext2" --recheck --verbose /dev/nbd0
 	;;
-	loongarch64) $RUNAS grub-install -d ../../usr/lib/grub/loongarch64-efi --target=loongarch64-efi --efi-directory=$WS/disk/boot/efi --boot-directory=$WS/disk/boot --no-floppy --bootloader-id="Vyasa" --modules="normal part_msdos ext2" --recheck --verbose /dev/nbd0
+	loongarch64)
+	    $RUNAS bwrap --dev-bind "../../" / --dev /dev --dev-bind /dev/nbd0 /dev/nbd0 --dev-bind /dev/nbd0p1 /dev/nbd0p1  --dev-bind /dev/nbd0p2 /dev/nbd0p2 --bind /sys /sys --bind /run /run --proc /proc --perms 1777 --tmpfs /dev/shm /sbin/grub-install --target=loong64-efi --efi-directory=/home/vyasa/disk/boot/efi --boot-directory=/home/vyasa/disk/boot --no-floppy --bootloader-id="Vyasa" --modules="normal part_msdos ext2" --recheck --verbose /dev/nbd0
 	;;
-	riscv64) $RUNAS grub-install -d ../../usr/lib/grub/riscv64-efi --target=riscv64-efi --efi-directory=$WS/disk/boot/efi --boot-directory=$WS/disk/boot --no-floppy --bootloader-id="Vyasa" --modules="normal part_msdos ext2" --recheck --verbose /dev/nbd0
+	riscv64)
+	    $RUNAS bwrap --dev-bind "../../" / --dev /dev --dev-bind /dev/nbd0 /dev/nbd0 --dev-bind /dev/nbd0p1 /dev/nbd0p1  --dev-bind /dev/nbd0p2 /dev/nbd0p2 --bind /sys /sys --bind /run /run --proc /proc --perms 1777 --tmpfs /dev/shm /sbin/grub-install --target=riscv64-efi --efi-directory=/home/vyasa/disk/boot/efi --boot-directory=/home/vyasa/disk/boot --no-floppy --bootloader-id="Vyasa" --modules="normal part_msdos ext2" --recheck --verbose /dev/nbd0
 	;;
-	x86_64) $RUNAS grub-install -d ../../usr/lib/grub/x86_64-efi --target=x86_64-efi --efi-directory=$WS/disk/boot/efi --boot-directory=$WS/disk/boot --no-floppy --bootloader-id="Vyasa" --modules="normal part_msdos ext2" --recheck --verbose /dev/nbd0
+	x86_64)
+	    #$RUNAS grub-install -d ../../usr/lib/grub/x86_64-efi --target=x86_64-efi --efi-directory=$WS/disk/boot/efi --boot-directory=$WS/disk/boot --no-floppy --bootloader-id="Vyasa" --modules="normal part_msdos ext2 multiboot" --recheck --verbose /dev/nbd0
+	    $RUNAS bwrap --dev-bind "../../" / --dev /dev --dev-bind /dev/nbd0 /dev/nbd0 --dev-bind /dev/nbd0p1 /dev/nbd0p1  --dev-bind /dev/nbd0p2 /dev/nbd0p2 --bind /sys /sys --bind /run /run --proc /proc --perms 1777 --tmpfs /dev/shm /sbin/grub-install --target=x86_64-efi --efi-directory=/home/vyasa/disk/boot/efi --boot-directory=/home/vyasa/disk/boot --no-floppy --bootloader-id="Vyasa" --modules="normal part_msdos ext2" --recheck --verbose /dev/nbd0
 	;;
 	#2|3) echo 2 or 3
 	#;;
@@ -224,18 +230,20 @@ esac
 #arch/x86/boot/bzImage bzImage.efi
 #Passing kernel parameters from the EFI shell
 #fs0:> bzImage.efi console=ttyS0 root=/dev/sda2
-#$RUNAS cp $VYASA/boot/vyasa $WS/disk/boot/efi/EFI/Vyasa/vyasa.efi
+#cp $VYASA/boot/{vmlinuz,initrd.img} /boot/efi/
 
 ##efibootmgr
-#ROOT_UUID=$(blkid -s UUID -o value /dev/nbd0p2)
+cp $VYASA/boot/vyasa $WS/disk/boot/efi/EFI/Vyasa/Vyasa.efi
+$RUNAS bwrap --dev-bind "../../" / --dev /dev --dev-bind /dev/nbd0 /dev/nbd0 --dev-bind /dev/nbd0p1 /dev/nbd0p1  --dev-bind /dev/nbd0p2 /dev/nbd0p2 --bind /sys /sys --bind /run /run --proc /proc --perms 1777 --tmpfs /dev/shm efibootmgr -c -d /dev/nbd0 -p 1 -L "Vyasa" -l EFI/Vyasa/Vyasa.efi --unicode "root=UUID=$ROOT_UUID rw console=tty0 console=ttyS0"
+$RUNAS bwrap --dev-bind "../../" / --dev /dev --dev-bind /dev/nbd0 /dev/nbd0 --dev-bind /dev/nbd0p1 /dev/nbd0p1  --dev-bind /dev/nbd0p2 /dev/nbd0p2 --bind /sys /sys --bind /run /run --proc /proc --perms 1777 --tmpfs /dev/shm efibootmgr -d /dev/nbd0 -v
+
 ##$RUNAS efibootmgr -c -d /dev/nbd0 -p 1 -L "Grub" -l '\EFI\Grub\grubx64.efi'
 ##$RUNAS efibootmgr -c -d /dev/nbd0 -p 1 -L "Vyasa" -l '\EFI\Vyasa\bzImage.efi'
-#$RUNAS efibootmgr -c -d /dev/nbd0 -p 1 -L "Vyasa" --loader /boot/vyasa --unicode "root=$ROOT_UUID rw console=tty0 console=ttyS0"
+#efibootmgr --disk /dev/[ESP device] --part [ESP partition #] --create --label "[Label]" --loader /[kernel image] --unicode "root=[root partition] initrd=/[initrd image] [extra options]"
+#efibootmgr --disk /dev/sda --part 1 --create --label "Linux" --loader /vmlinuz-4.8.0-2-amd64 --unicode "root=/dev/sda2 initrd=/initrd.img-4.8.0-2-amd64 ro quiet"
 ##efibootmgr -c -d /dev/nbd0 -p 1 -L "Vyasa" --loader /boot/vyasa --unicode 'root=#UUID or by-id## rw initrd=\initramfs-linux.img'
-##efibootmgr -c -d /dev/nbd0 -p 1 -L "Vyasa" --loader /vmlinuz-linux --unicode 'root=#BLOCK_IDENTIFIER## rw initrd=\initramfs-linux.img'
-##$RUNAS efibootmgr --create --disk /dev/nbd0 --part 1 --label "Vyasa Linux" --loader '\EFI\limine\BOOTX64.EFI' --unicode --verbose
-
-$RUNAS efibootmgr -d /dev/nbd0 -v
+#$RUNAS efibootmgr -c -d /dev/nbd0 -p 1 -L "Vyasa" -l '/vyasa.efi' --unicode "root=UUID=$ROOT_UUID rw console=tty0 console=ttyS0"
+#$RUNAS efibootmgr -d /dev/nbd0 -v
 
 mkdir $WS/disk/boot/grub -p
 $RUNAS tee -a $WS/disk/boot/grub/grub.cfg > /dev/null <<EOF

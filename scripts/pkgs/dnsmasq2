@@ -11,5 +11,5 @@ cd dnsmasq-2.90
 make -j$(nproc)
 cp src/dnsmasq /bin
 make install
-cd .. && package $(basename `pwd`)
+package $(basename `pwd`)
 # ------------------------------

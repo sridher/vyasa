@@ -36,6 +36,5 @@ make -j$(nproc)
 
 make DESTDIR=$VYASA TIC_PATH=$(pwd)/../tuild/progs/tic install
 ln -sv libncursesw.so $VYASA/usr/lib/libncurses.so
-cd .. && package $(basename `pwd`)
 # ------------------------------
 

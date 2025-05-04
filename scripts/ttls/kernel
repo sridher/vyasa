@@ -4,9 +4,9 @@ set -e -u -o pipefail
 
 # Kernel
 # ------------------------------
-cd /builds
+cd $WS/builds
 rm -rf linux-6.14.4
-tar -xf /sources/linux-6.14.4.tar.xz
+tar -xf ../sources/linux-6.14.4.tar.xz
 
 cd linux-6.14.4
 make distclean
@@ -170,20 +170,21 @@ cp .config vyasa-config
 
 make -j$(nproc)
 
+#cp $VYASA/boot/vyasa
 #sudo cp vbuilds/linux-6.14.4/arch/riscv/boot/Image.xz rootfs/boot/vyasa
 case "$(uname -m)" in
 	aarch64) 
-	  cp arch/arm64/boot/Image.gz /boot/vyasa
+	  cp arch/arm64/boot/Image.gz $VYASA/boot/vyasa
 	  echo "NOTE: Works on defconfig with crash"
 	  echo "NOTE: required kernel options to be enabled "
 	;;
-	loongarch64) cp arch/loong/boot/Image.gz /boot/vyasa
+	loongarch64) cp arch/loong/boot/Image.gz $VYASA/boot/vyasa
 	;;
 	riscv64) 
-	  cp arch/riscv/boot/Image.xz /boot/vyasa
+	  cp arch/riscv/boot/Image.xz $VYASA/boot/vyasa
 	  echo "NOTE: required kernel options to be enabled "
 	;;
-	x86_64) cp arch/x86/boot/bzImage /boot/vyasa
+	x86_64) cp arch/x86/boot/bzImage $VYASA/boot/vyasa
         ;;
 	*) echo -e "\e[1;36mERROR: Architecture not supported yet.\e[0m"
 	;;

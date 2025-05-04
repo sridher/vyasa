@@ -9,10 +9,16 @@ echo "$@"
 
 echo "WS: ${WS:?}"
 echo "JAK: ${JAK:?}"
+echo "TGT: ${TGT:?}"
 echo "VYASA: ${VYASA:?}"
 echo "VYASA_TGT: ${VYASA_TGT:?}"
 
-exec env -i HOME="$HOME" WS="/builds" JAK="$JAK" VYASA="/" VYASA_TGT="$VYASA_TGT" \
+# chroot
+# schroot
+# bubblewrap
+# systemd-nspawn 
+
+exec env -i HOME="$HOME" WS="/builds" JAK="$JAK" TGT="$TGT" VYASA="/" VYASA_TGT="$VYASA_TGT" \
 	     HOME=/root                  \
 	     TERM="$TERM"                \
 	     PS1='\e[1;34m(vyasa chroot)\e[0m \u:\w\$ '\
@@ -26,6 +32,7 @@ exec env -i HOME="$HOME" WS="/builds" JAK="$JAK" VYASA="/" VYASA_TGT="$VYASA_TGT
 	     --perms 1777 --tmpfs /dev/shm \
 	     --hostname vyasa    \
 	     --unshare-uts \
+	     --bind "$WS"/pkgs /pkgs \
 	     --bind "$WS"/scripts /vyasa \
 	     --bind "$WS"/vbuilds /builds \
 	     --bind "$WS"/sources /sources \

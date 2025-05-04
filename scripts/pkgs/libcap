@@ -11,5 +11,5 @@ cd libcap-2.75
 
 make -j$(nproc)
 make install
-cd .. && package $(basename `pwd`)
+package $(basename `pwd`)
 # ------------------------------

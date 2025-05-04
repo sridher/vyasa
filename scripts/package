@@ -1,0 +1,31 @@
+#!/bin/sh
+
+set -e -u -o pipefail
+
+#shift
+echo "$@"
+
+[ $(id -u) -ne 0 ] && echo -e "\e[1;31mRun this as root.....\e[0m" && exit 1
+
+echo "WS: ${WS:?}"
+echo "JAK: ${JAK:?}"
+echo "TGT: ${TGT:?}"
+echo "VYASA: ${VYASA:?}"
+echo "VYASA_TGT: ${VYASA_TGT:?}"
+
+package () {
+  [ -d "./build" ] && cd build
+  rm -rf "$JAK/$1"
+  make DESTDIR="$JAK/$1" ${2:-""} install # echo $1 $2 ${3:-$(date)}
+  cd "$JAK/$1" && find . > "$JAK/$1/manifest"
+  mkdir "$JAK/$1/_jak" && mv "$JAK/$1/manifest" "$JAK/$1/_jak/manifest"
+  #TGT - all, amd64, arm64, loong64, riscv64, ...
+  #touch $JAK/$1/_jak/{.dep,.env,install.sh,.patch,manifest} #bin debug dev doc lib man out
+  #make DESTDIR="$JAK/$1" -n install > $JAK/$1/_jak/manifest #-n, --just-print, --dry-run, --recon
+  tar --sort=name --mtime="@0" --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime,delete=btime,delete=mtime -cJpf "$JAK/$1-$TGT.jak" "$JAK/$1"
+  echo -e "\e[1;36m\nPackage: $JAK/$1-$TGT.jak ....\n\e[0m"
+}
+
+export -f package
+
+bash -e "$@"
